@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Records Chatbot - Arc Testnet</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(to bottom, #e0f7fa, #ffffff); color: #333; }
+    h1 { text-align: center; color: #00695c; }
+    #chat-container { max-width: 700px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+    #chat-header { background: #009688; color: white; padding: 15px; text-align: center; font-weight: bold; }
+    #chat-body { height: 400px; overflow-y: auto; padding: 15px; background: #f9f9f9; }
+    .message { margin: 12px 0; padding: 12px 18px; border-radius: 18px; max-width: 80%; line-height: 1.5; }
+    .user { background: #009688; color: white; margin-left: auto; }
+    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; }
+    #input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #ddd; }
+    #userInput { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; }
+    #sendBtn { margin-left: 10px; padding: 12px 24px; background: #009688; color: white; border: none; border-radius: 25px; cursor: pointer; }
+    #connectBtn { margin: 10px auto; display: block; padding: 12px 30px; background: #ff5722; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; }
+    #status { text-align: center; margin: 10px; color: #555; font-size: 14px; }
+    canvas { margin: 20px auto; display: block; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Patient Records Chatbot</h1>
+
+  <div id="chat-container">
+    <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
+    <div id="chat-body">
+      <div class="message bot">হ্যালো! আমি তোমার পেশেন্ট রেকর্ড চ্যাটবট। MetaMask কানেক্ট করে শুরু করুন।</div>
+    </div>
+    <div id="input-area">
+      <input type="text" id="userInput" placeholder="আপনার মেসেজ লিখুন... (যেমন: রেকর্ড দেখাও)" />
+      <button id="sendBtn">পাঠান</button>
+    </div>
+  </div>
+
+  <button id="connectBtn">MetaMask Connect করুন (Arc Testnet)</button>
+  <div id="status">Status: Not connected</div>
+
+  <canvas id="recordChart" width="400" height="200"></canvas>
+
+  <script>
+    const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
+
+    const abi = [
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_encryptedData","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
+    ];
+
+    let provider, signer, contract, userAddress;
+    let chartInstance = null;
+
+    // চ্যাট মেসেজ অ্যাড করা
+    function addMessage(text, isUser = false) {
+      const chatBody = document.getElementById("chat-body");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message " + (isUser ? "user" : "bot");
+      msgDiv.innerText = text;
+      chatBody.appendChild(msgDiv);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    // MetaMask কানেক্ট
+    document.getElementById("connectBtn").onclick = async () => {
+      const status = document.getElementById("status");
+      status.innerText = "কানেক্ট হচ্ছে...";
+
+      if (!window.ethereum) {
+        status.innerText = "MetaMask ইনস্টল করুন!";
+        addMessage("MetaMask পাওয়া যায়নি। দয়া করে ইনস্টল করুন।");
+        return;
+      }
+
+      try {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        userAddress = await signer.getAddress();
+
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== 5042002) {
+          status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
+          addMessage("Arc Testnet-এ সুইচ করুন!");
+          return;
+        }
+
+        contract = new ethers.Contract(contractAddress, abi, signer);
+
+        status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+        addMessage(`স্বাগতম, ${userAddress.slice(0,6)}... ! এখন আপনি রেকর্ড দেখতে বা অ্যাড করতে পারেন।`);
+      } catch (error) {
+        status.innerText = "Error: " + error.message;
+        addMessage("কানেক্ট করতে সমস্যা হয়েছে: " + error.message);
+      }
+    };
+
+    // মেসেজ পাঠানো
+    document.getElementById("sendBtn").onclick = async () => {
+      const input = document.getElementById("userInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, true);
+      input.value = "";
+
+      if (!contract) {
+        addMessage("প্রথমে MetaMask কানেক্ট করুন!");
+        return;
+      }
+
+      const lowerText = text.toLowerCase();
+
+      if (lowerText.includes("রেকর্ড দেখাও") || lowerText.includes("records") || lowerText.includes("দেখাও")) {
+        try {
+          const records = await contract.getRecords(userAddress);
+          let reply = "আপনার রেকর্ড:\n\n";
+          if (records.length === 0) {
+            reply += "কোনো রেকর্ড পাওয়া যায়নি।";
+          } else {
+            records.forEach((rec, i) => {
+              reply += `রেকর্ড ${i+1}: ${rec.encryptedData} (${new Date(Number(rec.timestamp) * 1000).toLocaleString()})\n`;
+            });
+          }
+          addMessage(reply);
+
+          // চার্ট আপডেট করো
+          updateChart(records);
+        } catch (error) {
+          addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
+        }
+      } 
+      else if (lowerText.includes("অ্যাড করো") || lowerText.includes("add") || lowerText.includes("নতুন রেকর্ড")) {
+        const data = text.split(":").slice(1).join(":").trim();
+        if (!data) {
+          addMessage("ডাটা লিখুন। উদাহরণ: 'অ্যাড করো: Fever 2025-02-10'");
+          return;
+        }
+
+        try {
+          const tx = await contract.addRecord(userAddress, data);
+          addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
+          await tx.wait();
+          addMessage("সফল! রেকর্ড অ্যাড হয়েছে। 'রেকর্ড দেখাও' লিখে চেক করুন।");
+        } catch (error) {
+          addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
+        }
+      } 
+      else {
+        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n- 'রেকর্ড দেখাও'\n- 'অ্যাড করো: [আপনার ডাটা]'");
+      }
+    };
+
+    // চার্ট আপডেট (সিম্পল টাইমলাইন)
+    function updateChart(records) {
+      const ctx = document.getElementById("recordChart").getContext("2d");
+
+      if (chartInstance) chartInstance.destroy();
+
+      const labels = records.map((_, i) => `রেকর্ড ${i+1}`);
+      const data = records.map(rec => Number(rec.timestamp));
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'রেকর্ডের সময় (Unix timestamp)',
+            data: data,
+            borderColor: '#009688',
+            backgroundColor: 'rgba(0, 150, 136, 0.2)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { title: { display: true, text: 'Timestamp' } }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
