@@ -6,6 +6,8 @@
   <title>AI Doctor - Patient Records Chatbot</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- CryptoJS for encryption -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -120,9 +122,9 @@
       <div class="message bot">হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।  
 ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।  
 উদাহরণ:  
-• রেকর্ড দেখাও  
+• রেকর্ড দেখাও / আমার হিস্ট্রি  
 • অ্যাড করো: Fever 2025-02-10  
-• আমার হিস্ট্রি কী?  
+• আমার ওষুধ কী কী?  
 • নতুন ডাটা যোগ করো</div>
     </div>
     <div id="input-area">
@@ -153,6 +155,18 @@
     let contract = null;
     let userAddress = null;
     let chartInstance = null;
+
+    // CryptoJS এনক্রিপশন কী (টেস্টের জন্য ফিক্সড, পরে ইউজার-স্পেসিফিক করা যাবে)
+    const ENCRYPTION_KEY = "YourSecretKey123!@#"; // পরে পরিবর্তন করো
+
+    function encryptData(data) {
+      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
+    }
+
+    function decryptData(ciphertext) {
+      const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    }
 
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
@@ -190,9 +204,10 @@
 
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
         addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
-• রেকর্ড দেখাও  
+• রেকর্ড দেখাও / আমার হিস্ট্রি  
 • অ্যাড করো: [ডাটা]  
-• আমার হিস্ট্রি কী?`);
+• আমার ওষুধ কী কী?  
+• নতুন ডাটা যোগ করো`);
 
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
@@ -249,17 +264,28 @@
         lower.includes("আমার ডাটা") ||
         lower.includes("আমার রেকর্ড") ||
         lower.includes("কী আছে") ||
-        lower.includes("লিস্ট")
+        lower.includes("লিস্ট") ||
+        lower.includes("ওষুধ কী কী") ||
+        lower.includes("medicine") ||
+        lower.includes("ঔষধ")
       ) {
         try {
           const records = await contract.getRecords(userAddress);
           let reply = "আপনার রেকর্ড:\n\n";
+          let medicines = [];
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
             records.forEach((rec, i) => {
-              reply += `রেকর্ড ${i+1}: ${rec.encryptedData} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
+              const data = rec.encryptedData;
+              reply += `রেকর্ড ${i+1}: ${data} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
+              if (data.toLowerCase().includes("medicine") || data.toLowerCase().includes("ওষুধ") || data.toLowerCase().includes("paracetamol") || data.toLowerCase().includes("aspirin")) {
+                medicines.push(data);
+              }
             });
+            if (medicines.length > 0) {
+              reply += "\nআপনার ওষুধের লিস্ট:\n" + medicines.join("\n");
+            }
           }
           addMessage(reply);
           updateChart(records);
@@ -295,8 +321,11 @@
           return;
         }
 
+        // সিম্পল এনক্রিপশন (পরে IPFS যোগ করা যাবে)
+        const encrypted = encryptData(data);
+
         try {
-          const tx = await contract.addRecord(userAddress, data);
+          const tx = await contract.addRecord(userAddress, encrypted);
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
           await tx.wait();
           addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
@@ -308,7 +337,7 @@
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
       } 
       else {
-        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
+        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি / ওষুধ কী কী\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
     };
 
@@ -328,11 +357,11 @@
       const timestamps = records.map(rec => Number(rec.timestamp));
       const colors = records.map(rec => {
         const data = rec.encryptedData.toLowerCase();
-        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
-        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
-        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
-        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol")) return "#8e44ad";
-        return "#3498db"; // ডিফল্ট
+        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c"; // লাল
+        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12"; // কমলা
+        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60"; // সবুজ
+        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad"; // বেগুনি
+        return "#3498db"; // ডিফল্ট নীল
       });
 
       chartInstance = new Chart(ctx, {
@@ -351,7 +380,7 @@
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'রেকর্ডের টাইমলাইন' }
+            title: { display: true, text: 'রেকর্ডের টাইমলাইন (রোগ/ওষুধ অনুসারে কালার)' }
           },
           scales: {
             y: { beginAtZero: true, title: { display: true, text: 'Timestamp' } }
