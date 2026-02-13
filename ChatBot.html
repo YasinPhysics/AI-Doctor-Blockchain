@@ -6,7 +6,7 @@
   <title>AI Doctor - Patient Records Chatbot</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- CryptoJS for encryption -->
+  <!-- CryptoJS for encryption (optional, পরে IPFS-এর সাথে ব্যবহার করা যাবে) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
     body { 
@@ -289,10 +289,40 @@
           }
           addMessage(reply);
           updateChart(records);
+
+          // Grok AI-এর কাছে পরামর্শ চাওয়া
+          if (records.length > 0) {
+            try {
+              const response = await fetch('/api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  records: records.map(r => ({ 
+                    encryptedData: r.encryptedData, 
+                    timestamp: r.timestamp.toString() 
+                  })),
+                  userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য জানা না থাকলে সাধারণ পরামর্শ দিও।"
+                })
+              });
+
+              if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+              }
+
+              const data = await response.json();
+              if (data.advice) {
+                addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice);
+              } else {
+                addMessage("AI থেকে পরামর্শ পাওয়া যায়নি।");
+              }
+            } catch (err) {
+              addMessage("AI কানেকশন সমস্যা: " + err.message);
+            }
+          }
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
-      } 
+      }
       else if (
         lower.includes("অ্যাড") ||
         lower.includes("add") ||
@@ -332,10 +362,10 @@
         } catch (error) {
           addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
-      } 
+      }
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
-      } 
+      }
       else {
         addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি / ওষুধ কী কী\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
