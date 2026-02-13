@@ -1,0 +1,9 @@
+{
+  "name": "grok-advice-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@xai/grok-sdk": "^1.0.0"
+  }
+}
