@@ -36,7 +36,8 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errText = await response.text();
+      throw new Error(`API error: ${response.status} - ${errText}`);
     }
 
     const data = await response.json();
@@ -45,6 +46,6 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
     res.status(200).json({ advice });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'AI request failed' });
+    res.status(500).json({ error: 'AI request failed: ' + error.message });
   }
 }
