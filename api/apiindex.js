@@ -1,5 +1,3 @@
-import { createClient } from '@xai/grok-sdk';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -12,10 +10,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = createClient({
-      apiKey: process.env.GROK_API_KEY,
-    });
-
     const prompt = `
 আমি একজন AI ডাক্তার সহায়ক। নিচের পেশেন্টের রেকর্ড দেখে সহজ, বাস্তবসম্মত এবং সতর্কতামূলক পরামর্শ দাও।
 পরামর্শে সবসময় বলো: "এটা শুধু সাধারণ পরামর্শ। অবশ্যই ডাক্তারের সাথে কথা বলুন।"
@@ -27,14 +21,26 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
 উত্তর বাংলায় দাও, সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
 
-    const completion = await client.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "grok-beta",
-      temperature: 0.7,
-      max_tokens: 300,
+    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "grok-beta",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 300
+      })
     });
 
-    const advice = completion.choices[0].message.content.trim();
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const advice = data.choices[0].message.content.trim();
 
     res.status(200).json({ advice });
   } catch (error) {
