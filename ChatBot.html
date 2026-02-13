@@ -18,7 +18,8 @@
     #input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #ddd; }
     #userInput { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; }
     #sendBtn { margin-left: 10px; padding: 12px 24px; background: #009688; color: white; border: none; border-radius: 25px; cursor: pointer; }
-    #connectBtn, #logoutBtn { margin: 10px auto; display: block; padding: 12px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; }
+    .auth-buttons { text-align: center; margin: 15px 0; }
+    #connectBtn, #logoutBtn { padding: 12px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; margin: 0 10px; }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
     #status { text-align: center; margin: 10px; color: #555; font-size: 14px; }
@@ -39,8 +40,11 @@
     </div>
   </div>
 
-  <button id="connectBtn">ওয়ালেট কানেক্ট করুন (Arc Testnet)</button>
-  <button id="logoutBtn">লগআউট / ডিসকানেক্ট</button>
+  <div class="auth-buttons">
+    <button id="connectBtn">ওয়ালেট কানেক্ট করুন (Arc Testnet)</button>
+    <button id="logoutBtn">লগআউট / ডিসকানেক্ট</button>
+  </div>
+
   <div id="status">Status: Not connected</div>
 
   <canvas id="recordChart" width="400" height="200"></canvas>
@@ -59,6 +63,7 @@
     let userAddress = null;
     let chartInstance = null;
 
+    // চ্যাট মেসেজ অ্যাড করা
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -68,7 +73,8 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    async function connectWallet() {
+    // ওয়ালেট কানেক্ট
+    document.getElementById("connectBtn").onclick = async () => {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
 
@@ -99,15 +105,16 @@
 
         // বাটন সুইচ
         document.getElementById("connectBtn").style.display = "none";
-        document.getElementById("logoutBtn").style.display = "block";
+        document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা হয়েছে: " + error.message);
       }
-    }
+    };
 
-    function disconnectWallet() {
+    // Logout / Disconnect
+    document.getElementById("logoutBtn").onclick = () => {
       provider = null;
       signer = null;
       contract = null;
@@ -125,11 +132,9 @@
         chartInstance.destroy();
         chartInstance = null;
       }
-    }
+    };
 
-    document.getElementById("connectBtn").onclick = connectWallet;
-    document.getElementById("logoutBtn").onclick = disconnectWallet;
-
+    // মেসেজ পাঠানো
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
