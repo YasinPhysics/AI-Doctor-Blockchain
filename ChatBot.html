@@ -3,39 +3,130 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patient Records Chatbot - Arc Testnet</title>
+  <title>AI Doctor - Patient Records Chatbot</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(to bottom, #e0f7fa, #ffffff); color: #333; }
-    h1 { text-align: center; color: #00695c; }
-    #chat-container { max-width: 700px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
-    #chat-header { background: #009688; color: white; padding: 15px; text-align: center; font-weight: bold; }
-    #chat-body { height: 400px; overflow-y: auto; padding: 15px; background: #f9f9f9; }
-    .message { margin: 12px 0; padding: 12px 18px; border-radius: 18px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
-    .user { background: #009688; color: white; margin-left: auto; }
-    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; }
-    #input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #ddd; }
-    #userInput { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; }
-    #sendBtn { margin-left: 10px; padding: 12px 24px; background: #009688; color: white; border: none; border-radius: 25px; cursor: pointer; }
-    .auth-buttons { text-align: center; margin: 15px 0; }
-    #connectBtn, #logoutBtn { padding: 12px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; margin: 0 10px; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: linear-gradient(135deg, #e0f7fa, #b2ebf2); 
+      color: #333; 
+    }
+    h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
+    #chat-container { 
+      max-width: 720px; 
+      margin: 0 auto 20px; 
+      background: white; 
+      border-radius: 16px; 
+      box-shadow: 0 6px 25px rgba(0,0,0,0.12); 
+      overflow: hidden; 
+    }
+    #chat-header { 
+      background: linear-gradient(90deg, #009688, #00796b); 
+      color: white; 
+      padding: 18px; 
+      text-align: center; 
+      font-weight: bold; 
+      font-size: 1.3em; 
+    }
+    #chat-body { 
+      height: 420px; 
+      overflow-y: auto; 
+      padding: 20px; 
+      background: #f8f9fa; 
+    }
+    .message { 
+      margin: 14px 0; 
+      padding: 14px 20px; 
+      border-radius: 20px; 
+      max-width: 82%; 
+      line-height: 1.5; 
+      word-wrap: break-word; 
+    }
+    .user { 
+      background: #009688; 
+      color: white; 
+      margin-left: auto; 
+      border-bottom-right-radius: 4px; 
+    }
+    .bot { 
+      background: #e0f2f1; 
+      color: #004d40; 
+      margin-right: auto; 
+      border-bottom-left-radius: 4px; 
+    }
+    #input-area { 
+      display: flex; 
+      padding: 16px; 
+      background: white; 
+      border-top: 1px solid #e0e0e0; 
+    }
+    #userInput { 
+      flex: 1; 
+      padding: 14px 18px; 
+      border: 1px solid #ccc; 
+      border-radius: 30px; 
+      outline: none; 
+      font-size: 1em; 
+    }
+    #sendBtn { 
+      margin-left: 12px; 
+      padding: 14px 28px; 
+      background: #009688; 
+      color: white; 
+      border: none; 
+      border-radius: 30px; 
+      cursor: pointer; 
+      font-weight: bold; 
+    }
+    .auth-buttons { 
+      text-align: center; 
+      margin: 20px 0; 
+    }
+    #connectBtn, #logoutBtn { 
+      padding: 14px 32px; 
+      border: none; 
+      border-radius: 30px; 
+      cursor: pointer; 
+      font-size: 1.1em; 
+      margin: 0 12px; 
+    }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
-    #status { text-align: center; margin: 10px; color: #555; font-size: 14px; }
-    canvas { margin: 20px auto; display: block; max-width: 100%; }
+    #status { 
+      text-align: center; 
+      margin: 15px; 
+      color: #444; 
+      font-size: 1.05em; 
+      font-weight: 500; 
+    }
+    canvas { 
+      margin: 25px auto; 
+      display: block; 
+      max-width: 100%; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+    }
   </style>
 </head>
 <body>
-  <h1>Patient Records Chatbot</h1>
+  <h1>AI Doctor - Patient Records Chatbot</h1>
 
   <div id="chat-container">
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
     <div id="chat-body">
-      <div class="message bot">হ্যালো! আমি তোমার পেশেন্ট রেকর্ড চ্যাটবট। ওয়ালেট কানেক্ট করে শুরু করুন।</div>
+      <div class="message bot">হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।  
+ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।  
+উদাহরণ:  
+• রেকর্ড দেখাও  
+• অ্যাড করো: Fever 2025-02-10  
+• আমার হিস্ট্রি কী?  
+• নতুন ডাটা যোগ করো</div>
     </div>
     <div id="input-area">
-      <input type="text" id="userInput" placeholder="আপনার মেসেজ লিখুন... (যেমন: রেকর্ড দেখাও)" />
+      <input type="text" id="userInput" placeholder="আপনার মেসেজ লিখুন..." />
       <button id="sendBtn">পাঠান</button>
     </div>
   </div>
@@ -47,7 +138,7 @@
 
   <div id="status">Status: Not connected</div>
 
-  <canvas id="recordChart" width="400" height="200"></canvas>
+  <canvas id="recordChart" width="500" height="280"></canvas>
 
   <script>
     const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
@@ -63,7 +154,6 @@
     let userAddress = null;
     let chartInstance = null;
 
-    // চ্যাট মেসেজ অ্যাড করা
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -73,14 +163,13 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    // ওয়ালেট কানেক্ট
-    document.getElementById("connectBtn").onclick = async () => {
+    async function connectWallet() {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
 
       if (!window.ethereum) {
-        status.innerText = "কোনো ওয়ালেট এক্সটেনশন পাওয়া যায়নি! MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।";
-        addMessage("ওয়ালেট পাওয়া যায়নি। দয়া করে MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।");
+        status.innerText = "কোনো ওয়ালেট পাওয়া যায়নি!";
+        addMessage("MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।");
         return;
       }
 
@@ -91,30 +180,30 @@
         userAddress = await signer.getAddress();
 
         const network = await provider.getNetwork();
-        const chainId = Number(network.chainId);
-        if (chainId !== 5042002) {
+        if (Number(network.chainId) !== 5042002) {
           status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
-          addMessage("দয়া করে Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)");
+          addMessage("Arc Testnet-এ সুইচ করুন!");
           return;
         }
 
         contract = new ethers.Contract(contractAddress, abi, signer);
 
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-        addMessage(`স্বাগতম, ${userAddress.slice(0,6)}...! এখন আপনি রেকর্ড দেখতে বা অ্যাড করতে পারেন।`);
+        addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
+• রেকর্ড দেখাও  
+• অ্যাড করো: [ডাটা]  
+• আমার হিস্ট্রি কী?`);
 
-        // বাটন সুইচ
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
-        addMessage("কানেক্ট করতে সমস্যা হয়েছে: " + error.message);
+        addMessage("কানেক্ট করতে সমস্যা: " + error.message);
       }
-    };
+    }
 
-    // Logout / Disconnect
-    document.getElementById("logoutBtn").onclick = () => {
+    function disconnectWallet() {
       provider = null;
       signer = null;
       contract = null;
@@ -125,16 +214,17 @@
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
 
-      addMessage("আপনি সফলভাবে লগআউট/ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
+      addMessage("আপনি লগআউট / ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
 
-      // চার্ট ক্লিয়ার
       if (chartInstance) {
         chartInstance.destroy();
         chartInstance = null;
       }
-    };
+    }
 
-    // মেসেজ পাঠানো
+    document.getElementById("connectBtn").onclick = connectWallet;
+    document.getElementById("logoutBtn").onclick = disconnectWallet;
+
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
@@ -148,9 +238,20 @@
         return;
       }
 
-      const lowerText = text.toLowerCase();
+      const lower = text.toLowerCase();
 
-      if (lowerText.includes("রেকর্ড দেখাও") || lowerText.includes("records") || lowerText.includes("দেখাও")) {
+      // রেকর্ড দেখার কমান্ড
+      if (
+        lower.includes("দেখাও") ||
+        lower.includes("রেকর্ড") ||
+        lower.includes("records") ||
+        lower.includes("হিস্ট্রি") ||
+        lower.includes("পুরোনো") ||
+        lower.includes("আমার ডাটা") ||
+        lower.includes("আমার রেকর্ড") ||
+        lower.includes("কী আছে") ||
+        lower.includes("লিস্ট")
+      ) {
         try {
           const records = await contract.getRecords(userAddress);
           let reply = "আপনার রেকর্ড:\n\n";
@@ -158,7 +259,7 @@
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
             records.forEach((rec, i) => {
-              reply += `রেকর্ড ${i+1}: ${rec.encryptedData} (${new Date(Number(rec.timestamp) * 1000).toLocaleString()})\n`;
+              reply += `রেকর্ড ${i+1}: ${rec.encryptedData} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
             });
           }
           addMessage(reply);
@@ -166,11 +267,35 @@
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
-      } 
-      else if (lowerText.includes("অ্যাড করো") || lowerText.includes("add") || lowerText.includes("নতুন রেকর্ড")) {
-        const data = text.split(":").slice(1).join(":").trim();
-        if (!data) {
-          addMessage("ডাটা লিখুন। উদাহরণ: 'অ্যাড করো: Fever 2025-02-10'");
+      }
+
+      // রেকর্ড অ্যাড করার কমান্ড
+      else if (
+        lower.includes("অ্যাড") ||
+        lower.includes("add") ||
+        lower.includes("যোগ") ||
+        lower.includes("নতুন") ||
+        lower.includes("এন্ট্রি") ||
+        lower.includes("নতুন রেকর্ড") ||
+        lower.includes("সেভ করো") ||
+        lower.includes("রেকর্ড করো")
+      ) {
+        let data = text;
+
+        // কোলন বা কীওয়ার্ডের পরের অংশ নেওয়া
+        const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
+        for (const kw of keywords) {
+          if (lower.includes(kw)) {
+            data = text.split(kw)[1]?.trim() || text;
+            break;
+          }
+        }
+        if (text.includes(":")) {
+          data = text.split(":").slice(1).join(":").trim();
+        }
+
+        if (!data || data.length < 3) {
+          addMessage("ডাটা লিখুন। উদাহরণ:\nঅ্যাড করো: Fever 2025-02-10\nনতুন: BP 120/80");
           return;
         }
 
@@ -178,13 +303,20 @@
           const tx = await contract.addRecord(userAddress, data);
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
           await tx.wait();
-          addMessage("সফল! রেকর্ড অ্যাড হয়েছে। 'রেকর্ড দেখাও' লিখে চেক করুন।");
+          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
         } catch (error) {
           addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
-      } 
+      }
+
+      // হাই / হ্যালো / সাধারণ কথা
+      else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
+        addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
+      }
+
+      // ডিফল্ট রিপ্লাই
       else {
-        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n- 'রেকর্ড দেখাও'\n- 'অ্যাড করো: [আপনার ডাটা]'");
+        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
     };
 
@@ -193,25 +325,43 @@
 
       if (chartInstance) chartInstance.destroy();
 
+      if (records.length === 0) {
+        document.getElementById("recordChart").style.display = "none";
+        return;
+      }
+
+      document.getElementById("recordChart").style.display = "block";
+
       const labels = records.map((_, i) => `রেকর্ড ${i+1}`);
-      const data = records.map(rec => Number(rec.timestamp));
+      const timestamps = records.map(rec => Number(rec.timestamp));
+      const colors = records.map(rec => {
+        const data = rec.encryptedData.toLowerCase();
+        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
+        if (data.includes("bp") || data.includes("pressure")) return "#f39c12";
+        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
+        return "#3498db"; // ডিফল্ট
+      });
 
       chartInstance = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
           labels: labels,
           datasets: [{
             label: 'রেকর্ডের সময় (Unix timestamp)',
-            data: data,
-            borderColor: '#009688',
-            backgroundColor: 'rgba(0, 150, 136, 0.2)',
-            tension: 0.1
+            data: timestamps,
+            backgroundColor: colors,
+            borderColor: colors.map(c => c + '88'),
+            borderWidth: 1
           }]
         },
         options: {
           responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'রেকর্ডের টাইমলাইন' }
+          },
           scales: {
-            y: { title: { display: true, text: 'Timestamp' } }
+            y: { beginAtZero: true, title: { display: true, text: 'Timestamp' } }
           }
         }
       });
