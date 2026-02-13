@@ -12,13 +12,15 @@
     #chat-container { max-width: 700px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
     #chat-header { background: #009688; color: white; padding: 15px; text-align: center; font-weight: bold; }
     #chat-body { height: 400px; overflow-y: auto; padding: 15px; background: #f9f9f9; }
-    .message { margin: 12px 0; padding: 12px 18px; border-radius: 18px; max-width: 80%; line-height: 1.5; }
+    .message { margin: 12px 0; padding: 12px 18px; border-radius: 18px; max-width: 80%; line-height: 1.5; word-wrap: break-word; }
     .user { background: #009688; color: white; margin-left: auto; }
     .bot { background: #e0f2f1; color: #004d40; margin-right: auto; }
     #input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #ddd; }
     #userInput { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; }
     #sendBtn { margin-left: 10px; padding: 12px 24px; background: #009688; color: white; border: none; border-radius: 25px; cursor: pointer; }
-    #connectBtn { margin: 10px auto; display: block; padding: 12px 30px; background: #ff5722; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; }
+    #connectBtn, #logoutBtn { margin: 10px auto; display: block; padding: 12px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; }
+    #connectBtn { background: #ff5722; color: white; }
+    #logoutBtn { background: #e74c3c; color: white; display: none; }
     #status { text-align: center; margin: 10px; color: #555; font-size: 14px; }
     canvas { margin: 20px auto; display: block; max-width: 100%; }
   </style>
@@ -29,7 +31,7 @@
   <div id="chat-container">
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
     <div id="chat-body">
-      <div class="message bot">হ্যালো! আমি তোমার পেশেন্ট রেকর্ড চ্যাটবট। MetaMask কানেক্ট করে শুরু করুন।</div>
+      <div class="message bot">হ্যালো! আমি তোমার পেশেন্ট রেকর্ড চ্যাটবট। ওয়ালেট কানেক্ট করে শুরু করুন।</div>
     </div>
     <div id="input-area">
       <input type="text" id="userInput" placeholder="আপনার মেসেজ লিখুন... (যেমন: রেকর্ড দেখাও)" />
@@ -37,7 +39,8 @@
     </div>
   </div>
 
-  <button id="connectBtn">MetaMask Connect করুন (Arc Testnet)</button>
+  <button id="connectBtn">ওয়ালেট কানেক্ট করুন (Arc Testnet)</button>
+  <button id="logoutBtn">লগআউট / ডিসকানেক্ট</button>
   <div id="status">Status: Not connected</div>
 
   <canvas id="recordChart" width="400" height="200"></canvas>
@@ -50,10 +53,12 @@
       {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
     ];
 
-    let provider, signer, contract, userAddress;
+    let provider = null;
+    let signer = null;
+    let contract = null;
+    let userAddress = null;
     let chartInstance = null;
 
-    // চ্যাট মেসেজ অ্যাড করা
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -63,14 +68,13 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    // MetaMask কানেক্ট
-    document.getElementById("connectBtn").onclick = async () => {
+    async function connectWallet() {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
 
       if (!window.ethereum) {
-        status.innerText = "MetaMask ইনস্টল করুন!";
-        addMessage("MetaMask পাওয়া যায়নি। দয়া করে ইনস্টল করুন।");
+        status.innerText = "কোনো ওয়ালেট এক্সটেনশন পাওয়া যায়নি! MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।";
+        addMessage("ওয়ালেট পাওয়া যায়নি। দয়া করে MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।");
         return;
       }
 
@@ -81,23 +85,51 @@
         userAddress = await signer.getAddress();
 
         const network = await provider.getNetwork();
-        if (Number(network.chainId) !== 5042002) {
+        const chainId = Number(network.chainId);
+        if (chainId !== 5042002) {
           status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
-          addMessage("Arc Testnet-এ সুইচ করুন!");
+          addMessage("দয়া করে Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)");
           return;
         }
 
         contract = new ethers.Contract(contractAddress, abi, signer);
 
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-        addMessage(`স্বাগতম, ${userAddress.slice(0,6)}... ! এখন আপনি রেকর্ড দেখতে বা অ্যাড করতে পারেন।`);
+        addMessage(`স্বাগতম, ${userAddress.slice(0,6)}...! এখন আপনি রেকর্ড দেখতে বা অ্যাড করতে পারেন।`);
+
+        // বাটন সুইচ
+        document.getElementById("connectBtn").style.display = "none";
+        document.getElementById("logoutBtn").style.display = "block";
+        document.getElementById("sendBtn").disabled = false;
       } catch (error) {
-        status.innerText = "Error: " + error.message;
+        status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা হয়েছে: " + error.message);
       }
-    };
+    }
 
-    // মেসেজ পাঠানো
+    function disconnectWallet() {
+      provider = null;
+      signer = null;
+      contract = null;
+      userAddress = null;
+
+      document.getElementById("status").innerText = "Status: Disconnected";
+      document.getElementById("connectBtn").style.display = "block";
+      document.getElementById("logoutBtn").style.display = "none";
+      document.getElementById("sendBtn").disabled = true;
+
+      addMessage("আপনি সফলভাবে লগআউট/ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
+
+      // চার্ট ক্লিয়ার
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+    }
+
+    document.getElementById("connectBtn").onclick = connectWallet;
+    document.getElementById("logoutBtn").onclick = disconnectWallet;
+
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
@@ -107,7 +139,7 @@
       input.value = "";
 
       if (!contract) {
-        addMessage("প্রথমে MetaMask কানেক্ট করুন!");
+        addMessage("প্রথমে ওয়ালেট কানেক্ট করুন!");
         return;
       }
 
@@ -125,8 +157,6 @@
             });
           }
           addMessage(reply);
-
-          // চার্ট আপডেট করো
           updateChart(records);
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
@@ -153,7 +183,6 @@
       }
     };
 
-    // চার্ট আপডেট (সিম্পল টাইমলাইন)
     function updateChart(records) {
       const ctx = document.getElementById("recordChart").getContext("2d");
 
