@@ -240,7 +240,6 @@
 
       const lower = text.toLowerCase();
 
-      // রেকর্ড দেখার কমান্ড
       if (
         lower.includes("দেখাও") ||
         lower.includes("রেকর্ড") ||
@@ -267,9 +266,7 @@
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
-      }
-
-      // রেকর্ড অ্যাড করার কমান্ড
+      } 
       else if (
         lower.includes("অ্যাড") ||
         lower.includes("add") ||
@@ -282,7 +279,6 @@
       ) {
         let data = text;
 
-        // কোলন বা কীওয়ার্ডের পরের অংশ নেওয়া
         const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
         for (const kw of keywords) {
           if (lower.includes(kw)) {
@@ -307,14 +303,10 @@
         } catch (error) {
           addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
-      }
-
-      // হাই / হ্যালো / সাধারণ কথা
+      } 
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
-      }
-
-      // ডিফল্ট রিপ্লাই
+      } 
       else {
         addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
@@ -337,8 +329,9 @@
       const colors = records.map(rec => {
         const data = rec.encryptedData.toLowerCase();
         if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
-        if (data.includes("bp") || data.includes("pressure")) return "#f39c12";
+        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
         if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
+        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol")) return "#8e44ad";
         return "#3498db"; // ডিফল্ট
       });
 
@@ -347,7 +340,7 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'রেকর্ডের সময় (Unix timestamp)',
+            label: 'রেকর্ডের সময়',
             data: timestamps,
             backgroundColor: colors,
             borderColor: colors.map(c => c + '88'),
