@@ -28,7 +28,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
         "Authorization": `Bearer ${process.env.GROK_API_KEY}`
       },
       body: JSON.stringify({
-        model: "grok-beta",
+        model: "grok-1-latest",  // এখানে চেঞ্জ করা হয়েছে
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
