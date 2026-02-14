@@ -146,10 +146,8 @@
   <canvas id="recordChart" width="500" height="280"></canvas>
 
   <script>
-    // তোমার নতুন কন্ট্রাক্ট অ্যাড্রেস
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
-    // নতুন কন্ট্রাক্টের ABI (Remix থেকে কপি করা)
     const abi = [
       {
         "inputs": [
@@ -276,7 +274,7 @@
 
       try {
         provider = new ethers.BrowserProvider(window.ethereum);
-        // Arc Testnet-এ ENS নেই, তাই disable করা
+        // Arc Testnet-এ ENS নেই, তাই disable
         provider = provider.withNetworkOverride({
           chainId: 5042002,
           name: "Arc Testnet",
@@ -367,7 +365,6 @@
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
           let reply = "আপনার রেকর্ড:\n\n";
-          let medicines = [];
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
@@ -393,7 +390,7 @@
           addMessage(reply);
           updateChart(records);
 
-          // AI পরামর্শ (Grok API)
+          // AI পরামর্শ
           if (records.length > 0) {
             try {
               const response = await fetch('/api', {
@@ -429,6 +426,7 @@
         lower.includes("সেভ করো") ||
         lower.includes("রেকর্ড করো")
       ) {
+        // উদাহরণ: অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15
         let data = text;
 
         const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
@@ -488,4 +486,42 @@
 
       document.getElementById("recordChart").style.display = "block";
 
-      const labels
+      const labels = [];
+      const data = [];
+
+      records.forEach(disease => {
+        disease.dailyRecords.forEach(rec => {
+          labels.push(`${disease.diseaseName} - ${new Date(Number(rec.timestamp) * 1000).toLocaleDateString()}`);
+          const value = parseFloat(rec.readingValue.split(" ")[0]) || 0;
+          data.push(value);
+        });
+      });
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'রিডিং মান',
+            data: data,
+            borderColor: '#009688',
+            backgroundColor: 'rgba(0, 150, 136, 0.2)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            title: { display: true, text: 'রোগের রিডিং টাইমলাইন' }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
