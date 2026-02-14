@@ -7,108 +7,23 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-      color: #333;
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); color: #333; }
     h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
-    #chat-container {
-      max-width: 720px;
-      margin: 0 auto 20px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-      overflow: hidden;
-    }
-    #chat-header {
-      background: linear-gradient(90deg, #009688, #00796b);
-      color: white;
-      padding: 18px;
-      text-align: center;
-      font-weight: bold;
-      font-size: 1.3em;
-    }
-    #chat-body {
-      height: 420px;
-      overflow-y: auto;
-      padding: 20px;
-      background: #f8f9fa;
-    }
-    .message {
-      margin: 14px 0;
-      padding: 14px 20px;
-      border-radius: 20px;
-      max-width: 82%;
-      line-height: 1.5;
-      word-wrap: break-word;
-    }
-    .user {
-      background: #009688;
-      color: white;
-      margin-left: auto;
-      border-bottom-right-radius: 4px;
-    }
-    .bot {
-      background: #e0f2f1;
-      color: #004d40;
-      margin-right: auto;
-      border-bottom-left-radius: 4px;
-    }
-    #input-area {
-      display: flex;
-      padding: 16px;
-      background: white;
-      border-top: 1px solid #e0e0e0;
-    }
-    #userInput {
-      flex: 1;
-      padding: 14px 18px;
-      border: 1px solid #ccc;
-      border-radius: 30px;
-      outline: none;
-      font-size: 1em;
-    }
-    #sendBtn {
-      margin-left: 12px;
-      padding: 14px 28px;
-      background: #009688;
-      color: white;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .auth-buttons {
-      text-align: center;
-      margin: 20px 0;
-    }
-    #connectBtn, #logoutBtn {
-      padding: 14px 32px;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      font-size: 1.1em;
-      margin: 0 12px;
-    }
+    #chat-container { max-width: 720px; margin: 0 auto 20px; background: white; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); overflow: hidden; }
+    #chat-header { background: linear-gradient(90deg, #009688, #00796b); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.3em; }
+    #chat-body { height: 420px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
+    .message { margin: 14px 0; padding: 14px 20px; border-radius: 20px; max-width: 82%; line-height: 1.5; word-wrap: break-word; }
+    .user { background: #009688; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; border-bottom-left-radius: 4px; }
+    #input-area { display: flex; padding: 16px; background: white; border-top: 1px solid #e0e0e0; }
+    #userInput { flex: 1; padding: 14px 18px; border: 1px solid #ccc; border-radius: 30px; outline: none; font-size: 1em; }
+    #sendBtn { margin-left: 12px; padding: 14px 28px; background: #009688; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; }
+    .auth-buttons { text-align: center; margin: 20px 0; }
+    #connectBtn, #logoutBtn { padding: 14px 32px; border: none; border-radius: 30px; cursor: pointer; font-size: 1.1em; margin: 0 12px; }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
-    #status {
-      text-align: center;
-      margin: 15px;
-      color: #444;
-      font-size: 1.05em;
-      font-weight: 500;
-    }
-    canvas {
-      margin: 25px auto;
-      display: block;
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
+    #status { text-align: center; margin: 15px; color: #444; font-size: 1.05em; font-weight: 500; }
+    canvas { margin: 25px auto; display: block; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
   </style>
 </head>
 <body>
@@ -117,7 +32,7 @@
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
     <div id="chat-body">
       <div class="message bot">হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।  
-ওয়ালেট কানেক্ট করো (Arc Testnet), তারপর বলো কী করতে চাও।  
+ওয়ালেট কানেক্ট করুন (Arc Testnet), তারপর বলুন কী করতে চান।  
 উদাহরণ:  
 • রেকর্ড দেখাও / আমার হিস্ট্রি  
 • অ্যাড করো / নতুন রেকর্ড</div>
@@ -206,7 +121,6 @@
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
-        // প্রোফাইল চেক
         try {
           const fixed = await contract.getFixedProfile(userAddress);
           if (fixed.dateOfBirth !== 0n) {
@@ -241,10 +155,7 @@
       document.getElementById("sendBtn").disabled = true;
       document.getElementById("userInput").disabled = true;
       addMessage("ডিসকানেক্ট হয়েছে। আবার কানেক্ট করুন।");
-      if (chartInstance) {
-        chartInstance.destroy();
-        chartInstance = null;
-      }
+      if (chartInstance) chartInstance.destroy();
     }
 
     document.getElementById("connectBtn").onclick = connectWallet;
@@ -252,33 +163,33 @@
 
     function askForFixedProfile() {
       const steps = [
-        "আপনার জন্ম তারিখ লিখুন (DD-MM-YYYY ফরম্যাটে)",
-        "আপনার লিঙ্গ লিখুন (Male / Female / Other)",
-        "আপনার ব্লাড গ্রুপ লিখুন (যেমন: A+, B-, O+)"
+        "জন্ম তারিখ লিখুন (DD-MM-YYYY)",
+        "লিঙ্গ লিখুন (Male/Female/Other)",
+        "ব্লাড গ্রুপ লিখুন (যেমন A+, O-)"
       ];
       addMessage(steps[fixedProfileSetupStep]);
     }
 
     function askForUpdatableProfile() {
       const steps = [
-        "আপনার বর্তমান ওজন লিখুন (kg)",
-        "আপনার উচ্চতা লিখুন (cm)",
-        "অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা, না থাকলে skip)",
-        "দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা, না থাকলে skip)"
+        "ওজন লিখুন (kg)",
+        "উচ্চতা লিখুন (cm)",
+        "অ্যালার্জি (কমা দিয়ে আলাদা, না থাকলে skip)",
+        "দীর্ঘমেয়াদি রোগ (কমা দিয়ে আলাদা, না থাকলে skip)"
       ];
       addMessage(steps[updatableProfileSetupStep]);
     }
 
     function askForRecord() {
       const steps = [
-        "রোগের নাম লিখুন (যেমন: Diabetes, Hypertension)",
-        "রিডিং/মান লিখুন (যেমন: 180 mg/dL)",
+        "রোগের নাম লিখুন (যেমন Diabetes)",
+        "রিডিং লিখুন (যেমন 180 mg/dL)",
         "ওষুধের নাম লিখুন (না থাকলে skip)",
-        "ডোজ লিখুন (যেমন: 500mg, skip)",
-        "ফ্রিকোয়েন্সি লিখুন (যেমন: 1 time/day, skip)",
-        "কতদিন খাবেন (দিন সংখ্যা, skip)",
-        "রোগের বিস্তারিত নোট/তথ্য (অপশনাল, skip)",
-        "IPFS CID (যদি থাকে, অপশনাল, skip)"
+        "ডোজ লিখুন (যেমন 500mg, skip)",
+        "ফ্রিকোয়েন্সি লিখুন (যেমন 3 times/day, skip)",
+        "কতদিন খাবেন (দিন, skip)",
+        "রোগের বিস্তারিত নোট (অপশনাল, skip)",
+        "IPFS CID (অপশনাল, skip)"
       ];
       addMessage(steps[recordSetupStep]);
     }
@@ -302,14 +213,14 @@
       // Fixed profile mode
       if (fixedProfileSetupStep >= 0) {
         if (isSkip) {
-          addMessage("জন্ম তারিখ, লিঙ্গ, ব্লাড গ্রুপ স্কিপ করা যাবে না। দয়া করে দিন।");
+          addMessage("এই ফিল্ড স্কিপ করা যাবে না।");
           return;
         }
         switch (fixedProfileSetupStep) {
           case 0:
             const [dd, mm, yyyy] = text.split("-").map(Number);
             if (!dd || !mm || !yyyy || dd < 1 || dd > 31 || mm < 1 || mm > 12) {
-              addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY (যেমন 15-08-1995)");
+              addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
               return;
             }
             const date = new Date(yyyy, mm - 1, dd);
@@ -361,7 +272,7 @@
             );
             addMessage(`আপডেট হচ্ছে... ${tx.hash.slice(0,10)}...`);
             await tx.wait();
-            addMessage("প্রোফাইল সম্পূর্ণ সেট হয়েছে! এখন রেকর্ড অ্যাড করতে পারেন।");
+            addMessage("প্রোফাইল সম্পূর্ণ সেট হয়েছে!");
             updatableProfileSetupStep = -1;
           } catch (err) {
             addMessage("আপডেটে সমস্যা: " + (err.reason || err.message || "Unknown"));
@@ -376,7 +287,7 @@
       // Record mode
       if (recordSetupStep >= 0) {
         if (recordSetupStep < 2 && isSkip) {
-          addMessage("রোগের নাম এবং রিডিং স্কিপ করা যাবে না। দয়া করে লিখুন।");
+          addMessage("রোগের নাম এবং রিডিং স্কিপ করা যাবে না।");
           return;
         }
 
@@ -398,7 +309,7 @@
             let medicines = [];
 
             const medNameClean = (recordData.medName || "").trim();
-            const hasValidMed = medNameClean !== "" && !["skip", "নাই", "none"].includes(medNameClean.toLowerCase());
+            const hasValidMed = medNameClean !== "" && !["skip", "নাই", "none", ""].includes(medNameClean.toLowerCase());
 
             if (hasValidMed) {
               medicines = [{
@@ -409,7 +320,6 @@
               }];
             }
 
-            // Debug log – খুব গুরুত্বপূর্ণ
             console.log("===== addDailyRecord DEBUG =====");
             console.log("diseaseName:", recordData.diseaseName || "(empty)");
             console.log("readingValue:", recordData.readingValue || "(empty)");
@@ -419,14 +329,33 @@
             console.log("diseaseDetails:", recordData.diseaseDetails || "(empty)");
             console.log("==============================");
 
-            const tx = await contract.addDailyRecord(
+            // ethers.Interface দিয়ে encode করে পাঠানো
+            const iface = new ethers.Interface(abi);
+            const encodedData = iface.encodeFunctionData("addDailyRecord", [
               recordData.diseaseName    || "",
               recordData.readingValue   || "",
               medicines,
               recordData.ipfsCid        || "",
               recordData.diseaseDetails || ""
-            );
+            ]);
 
+            console.log("Encoded calldata (first 100 chars):", encodedData.slice(0, 100) + "...");
+
+            const txRequest = {
+              to: contractAddress,
+              data: encodedData
+            };
+
+            // estimateGas চেক
+            try {
+              const gasEstimate = await provider.estimateGas(txRequest);
+              console.log("Gas estimate success:", gasEstimate.toString());
+            } catch (gasErr) {
+              console.log("estimateGas failed:", gasErr);
+              throw new Error("estimateGas failed: " + (gasErr.message || "Unknown"));
+            }
+
+            const tx = await signer.sendTransaction(txRequest);
             addMessage(`রেকর্ড অ্যাড হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
             await tx.wait(1);
             addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
@@ -436,7 +365,7 @@
           } catch (err) {
             console.error("addDailyRecord ERROR:", err);
             let msg = "রেকর্ড অ্যাড করতে সমস্যা:\n" + (err.reason || err.message || "Unknown error");
-            if (err.data) msg += "\nData: " + JSON.stringify(err.data, null, 2);
+            if (err.data) msg += "\nRevert data: " + JSON.stringify(err.data, null, 2);
             addMessage(msg);
             recordSetupStep = -1;
             recordData = {};
@@ -464,7 +393,7 @@
                 reply += `  রিডিং: ${rec.readingValue}\n`;
                 reply += `  বয়স (তখন): ${rec.patientAgeAtRecord} বছর\n`;
                 reply += `  ওজন: ${rec.patientWeightKg} kg | উচ্চতা: ${rec.patientHeightCm} cm\n`;
-                if (rec.medicines.length > 0) {
+                if (rec.medicines?.length > 0) {
                   reply += "  ওষুধ:\n";
                   rec.medicines.forEach(m => {
                     reply += `    • ${m.name} (${m.dose || 'N/A'}, ${m.frequency || 'N/A'}, ${m.durationDays} দিন)\n`;
