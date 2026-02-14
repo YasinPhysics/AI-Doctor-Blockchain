@@ -10,16 +10,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = `...` // আগের প্রম্পট
+    const prompt = `
+আমি একজন AI ডাক্তার সহায়ক। নিচের পেশেন্টের রেকর্ড দেখে সহজ, বাস্তবসম্মত এবং সতর্কতামূলক পরামর্শ দাও।
+পরামর্শে সবসময় বলো: "এটা শুধু সাধারণ পরামর্শ। অবশ্যই ডাক্তারের সাথে কথা বলুন।"
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+রেকর্ড:
+${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).toLocaleString()})`).join('\n')}
+
+ইউজারের প্রশ্ন/মেসেজ: ${userMessage}
+
+উত্তর বাংলায় দাও, সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: "llama3-8b-8192",  // ফ্রি + দ্রুত মডেল
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
@@ -28,7 +37,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${errText}`);
+      throw new Error(`Groq API error: ${response.status} - ${errText}`);
     }
 
     const data = await response.json();
@@ -36,7 +45,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ advice });
   } catch (error) {
-    console.error("OpenAI API error:", error);
+    console.error("Groq API error:", error);
     res.status(500).json({ error: 'AI request failed: ' + error.message });
   }
 }
