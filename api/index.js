@@ -37,7 +37,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`API error: ${response.status} - ${errText}`);
+      throw new Error(`Grok API error: ${response.status} - ${errText}`);
     }
 
     const data = await response.json();
@@ -45,7 +45,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
     res.status(200).json({ advice });
   } catch (error) {
-    console.error(error);
+    console.error("Grok API error:", error);
     res.status(500).json({ error: 'AI request failed: ' + error.message });
   }
 }
