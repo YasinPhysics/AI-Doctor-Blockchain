@@ -10,7 +10,6 @@
   <!-- nft.storage for IPFS -->
   <script src="https://unpkg.com/nft.storage/dist/bundle.min.js"></script>
   <style>
-    /* তোমার আগের স্টাইল রাখো */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       margin: 0; 
@@ -166,6 +165,7 @@
 
     const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
+    // nft.storage client (Vercel-এ NFT_STORAGE_KEY সেট করতে হবে)
     const nftStorageClient = new NFTStorage({ token: process.env.NFT_STORAGE_KEY });
 
     function encryptData(data) {
@@ -236,6 +236,7 @@
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
+        document.getElementById("userInput").disabled = false;
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা: " + error.message);
@@ -252,6 +253,7 @@
       document.getElementById("connectBtn").style.display = "block";
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
+      document.getElementById("userInput").disabled = true;
 
       addMessage("আপনি লগআউট / ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
 
@@ -384,8 +386,12 @@
       const labels = records.map((_, i) => `রেকর্ড ${i+1}`);
       const timestamps = records.map(rec => Number(rec.timestamp));
       const colors = records.map(rec => {
-        // CID থেকে ডাটা ডিক্রিপ্ট না করে সিম্পল চেক (যদি CID হয়)
-        return "#3498db"; // ডিফল্ট
+        const data = rec.encryptedData.toLowerCase();
+        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
+        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
+        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
+        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad";
+        return "#3498db";
       });
 
       chartInstance = new Chart(ctx, {
@@ -404,7 +410,7 @@
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'রেকর্ডের টাইমলাইন' }
+            title: { display: true, text: 'রেকর্ডের টাইমলাইন (রোগ/ওষুধ অনুসারে কালার)' }
           },
           scales: {
             y: { beginAtZero: true, title: { display: true, text: 'Timestamp' } }
