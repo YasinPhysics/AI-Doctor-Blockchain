@@ -9,11 +9,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing records or message' });
   }
 
-  if (!process.env.GROQ_API_KEY) {
-    console.error("GROQ_API_KEY is not set");
-    return res.status(500).json({ error: 'Server configuration error: Missing API key' });
-  }
-
   try {
     const prompt = `
 আমি একজন AI ডাক্তার সহায়ক। নিচের পেশেন্টের রেকর্ড দেখে সহজ, বাস্তবসম্মত এবং সতর্কতামূলক পরামর্শ দাও।
@@ -33,7 +28,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192",
+        model: "mixtral-8x7b-32768",  // এটা এখন কাজ করবে (ফ্রি + দারুণ)
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
