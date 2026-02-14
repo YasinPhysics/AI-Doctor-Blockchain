@@ -149,101 +149,8 @@
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
     const abi = [
-      {
-        "inputs": [
-          {"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},
-          {"internalType":"string","name":"_gender","type":"string"},
-          {"internalType":"string","name":"_bloodGroup","type":"string"}
-        ],
-        "name":"setFixedProfile",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"uint256","name":"_weightKg","type":"uint256"},
-          {"internalType":"uint256","name":"_heightCm","type":"uint256"},
-          {"internalType":"string[]","name":"_allergies","type":"string[]"},
-          {"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}
-        ],
-        "name":"updateProfile",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"address","name":"_doctor","type":"address"}
-        ],
-        "name":"addAllowedDoctor",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"address","name":"_doctor","type":"address"}
-        ],
-        "name":"removeAllowedDoctor",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"string","name":"_diseaseName","type":"string"},
-          {"internalType":"string","name":"_readingValue","type":"string"},
-          {"components":[
-            {"internalType":"string","name":"name","type":"string"},
-            {"internalType":"string","name":"dose","type":"string"},
-            {"internalType":"string","name":"frequency","type":"string"},
-            {"internalType":"uint256","name":"durationDays","type":"uint256"}
-          ],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},
-          {"internalType":"string","name":"_ipfsCid","type":"string"}
-        ],
-        "name":"addDailyRecord",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
-        "name":"getAllDiseaseRecords",
-        "outputs":[{"components":[
-          {"internalType":"string","name":"diseaseName","type":"string"},
-          {"components":[
-            {"internalType":"uint256","name":"timestamp","type":"uint256"},
-            {"internalType":"string","name":"readingValue","type":"string"},
-            {"components":[
-              {"internalType":"string","name":"name","type":"string"},
-              {"internalType":"string","name":"dose","type":"string"},
-              {"internalType":"string","name":"frequency","type":"string"},
-              {"internalType":"uint256","name":"durationDays","type":"uint256"}
-            ],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},
-            {"internalType":"string","name":"ipfsCid","type":"string"},
-            {"internalType":"address","name":"addedBy","type":"address"},
-            {"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},
-            {"internalType":"uint256","name":"patientWeightKg","type":"uint256"},
-            {"internalType":"uint256","name":"patientHeightCm","type":"uint256"}
-          ],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}
-        ],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],
-        "stateMutability":"view",
-        "type":"function"
-      },
-      {
-        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
-        "name":"getPatientProfile",
-        "outputs":[{"components":[
-          {"internalType":"uint256","name":"weightKg","type":"uint256"},
-          {"internalType":"uint256","name":"heightCm","type":"uint256"},
-          {"internalType":"string[]","name":"allergies","type":"string[]"},
-          {"internalType":"string[]","name":"chronicDiseases","type":"string[]"},
-          {"internalType":"address[]","name":"allowedDoctors","type":"address[]"}
-        ],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],
-        "stateMutability":"view",
-        "type":"function"
-      }
+      // ABI here (same as previous message)
+      // ... (paste the full ABI from earlier response)
     ];
 
     let provider = null;
@@ -251,6 +158,14 @@
     let contract = null;
     let userAddress = null;
     let chartInstance = null;
+
+    // Profile setup state
+    let profileSetupStep = -1;
+    let profileData = {};
+
+    // Record setup state
+    let recordSetupStep = -1;
+    let recordData = {};
 
     function addMessage(text, isUser = false, isAI = false) {
       const chatBody = document.getElementById("chat-body");
@@ -289,13 +204,20 @@
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
         addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
 • রেকর্ড দেখাও / আমার হিস্ট্রি  
-• অ্যাড করো: [রোগ] [রিডিং] [ওষুধের নাম] [ডোজ] [ফ্রিকোয়েন্সি] [দিন]  
-উদাহরণ: অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15`);
+• অ্যাড করো: [রোগ] [রিডিং] [ওষুধের নাম] [ডোজ] [ফ্রিকোয়েন্সি] [দিন]`);
 
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
+
+        // Check if profile is set
+        const profile = await contract.getPatientProfile(userAddress);
+        if (profile.dateOfBirth === 0n) {
+          addMessage("আপনার প্রোফাইল সেট করা হয়নি। আসুন প্রথমে আপনার তথ্য দিন।");
+          profileSetupStep = 0;
+          askForProfile();
+        }
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা: " + error.message);
@@ -307,6 +229,8 @@
       signer = null;
       contract = null;
       userAddress = null;
+      profileSetupStep = -1;
+      recordSetupStep = -1;
 
       document.getElementById("status").innerText = "Status: Disconnected";
       document.getElementById("connectBtn").style.display = "block";
@@ -325,6 +249,37 @@
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
+    // Profile setup questions
+    function askForProfile() {
+      const steps = [
+        "আপনার জন্ম তারিখ লিখুন (ফরম্যাট: DD-MM-YYYY)",
+        "আপনার লিঙ্গ লিখুন (Male/Female/Other)",
+        "আপনার ব্লাড গ্রুপ লিখুন (যেমন A+, O-)",
+        "আপনার ওজন লিখুন (kg)",
+        "আপনার উচ্চতা লিখুন (cm)",
+        "আপনার কোনো অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)",
+        "আপনার কোনো দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)"
+      ];
+
+      addMessage(steps[profileSetupStep]);
+    }
+
+    // Record setup questions
+    function askForRecord() {
+      const steps = [
+        "রোগের নাম লিখুন (যেমন Diabetes)",
+        "রিডিং লিখুন (যেমন 180 mg/dL)",
+        "ওষুধের নাম লিখুন (যেমন Metformin)",
+        "ডোজ লিখুন (যেমন 500mg)",
+        "ফ্রিকোয়েন্সি লিখুন (যেমন 3 times/day)",
+        "কতদিন খাবেন লিখুন (দিনের সংখ্যা)",
+        "রোগের বিস্তারিত তথ্য/নোট লিখুন (অপশনাল, না থাকলে skip লিখুন)",
+        "কোনো রিপোর্ট ফাইলের IPFS CID থাকলে দিন (অপশনাল, না থাকলে skip লিখুন)"
+      ];
+
+      addMessage(steps[recordSetupStep]);
+    }
+
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
@@ -340,20 +295,145 @@
 
       const lower = text.toLowerCase();
 
-      if (
-        lower.includes("দেখাও") ||
-        lower.includes("রেকর্ড") ||
-        lower.includes("records") ||
-        lower.includes("হিস্ট্রি") ||
-        lower.includes("পুরোনো") ||
-        lower.includes("আমার ডাটা") ||
-        lower.includes("আমার রেকর্ড") ||
-        lower.includes("কী আছে") ||
-        lower.includes("লিস্ট") ||
-        lower.includes("ওষুধ কী কী") ||
-        lower.includes("medicine") ||
-        lower.includes("ঔষধ")
-      ) {
+      // Profile setup mode
+      if (profileSetupStep >= 0) {
+        if (lower === "skip" || lower === "নাই" || lower === "") {
+          if (profileSetupStep === 5 || profileSetupStep === 6) {
+            profileData.allergies = profileSetupStep === 5 ? [] : profileData.allergies || [];
+            profileData.chronicDiseases = profileSetupStep === 6 ? [] : profileData.chronicDiseases || [];
+            profileSetupStep = 7;
+          } else {
+            addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
+            return;
+          }
+        } else {
+          switch (profileSetupStep) {
+            case 0:
+              // Date of Birth (DD-MM-YYYY to Unix timestamp)
+              const [day, month, year] = text.split("-");
+              if (!day || !month || !year) {
+                addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
+                return;
+              }
+              const date = new Date(year, month - 1, day);
+              profileData.dateOfBirth = Math.floor(date.getTime() / 1000);
+              break;
+            case 1:
+              profileData.gender = text;
+              break;
+            case 2:
+              profileData.bloodGroup = text;
+              break;
+            case 3:
+              profileData.weightKg = parseInt(text);
+              break;
+            case 4:
+              profileData.heightCm = parseInt(text);
+              break;
+            case 5:
+              profileData.allergies = text.split(",").map(a => a.trim());
+              break;
+            case 6:
+              profileData.chronicDiseases = text.split(",").map(a => a.trim());
+              break;
+          }
+        }
+
+        profileSetupStep++;
+        if (profileSetupStep === 7) {
+          try {
+            const tx = await contract.setFixedProfile(
+              profileData.dateOfBirth,
+              profileData.gender,
+              profileData.bloodGroup
+            );
+            addMessage("প্রোফাইল সেট হচ্ছে... Tx: " + tx.hash);
+            await tx.wait();
+            addMessage("প্রোফাইল সেট হয়েছে! এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
+            profileSetupStep = -1;
+          } catch (err) {
+            addMessage("প্রোফাইল সেট করতে সমস্যা: " + err.message);
+            profileSetupStep = -1;
+          }
+        } else {
+          askForProfile();
+        }
+        return;
+      }
+
+      // Record setup mode
+      if (recordSetupStep >= 0) {
+        if (lower === "skip" || lower === "নাই" || lower === "") {
+          if (recordSetupStep === 6 || recordSetupStep === 7) {
+            recordData.diseaseDetails = recordSetupStep === 6 ? "" : recordData.diseaseDetails || "";
+            recordData.ipfsCid = recordSetupStep === 7 ? "" : recordData.ipfsCid || "";
+            recordSetupStep = 8;
+          } else {
+            addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
+            return;
+          }
+        } else {
+          switch (recordSetupStep) {
+            case 0:
+              recordData.diseaseName = text;
+              break;
+            case 1:
+              recordData.readingValue = text;
+              break;
+            case 2:
+              recordData.medicineName = text;
+              break;
+            case 3:
+              recordData.dose = text;
+              break;
+            case 4:
+              recordData.frequency = text;
+              break;
+            case 5:
+              recordData.durationDays = parseInt(text);
+              break;
+            case 6:
+              recordData.diseaseDetails = text;
+              break;
+            case 7:
+              recordData.ipfsCid = text;
+              break;
+          }
+        }
+
+        recordSetupStep++;
+        if (recordSetupStep === 8) {
+          try {
+            const medicines = [{
+              name: recordData.medicineName,
+              dose: recordData.dose,
+              frequency: recordData.frequency,
+              durationDays: recordData.durationDays
+            }];
+
+            const tx = await contract.addDailyRecord(
+              recordData.diseaseName,
+              recordData.readingValue,
+              medicines,
+              recordData.ipfsCid,
+              recordData.diseaseDetails
+            );
+            addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
+            await tx.wait();
+            addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
+            recordSetupStep = -1;
+          } catch (err) {
+            addMessage("রেকর্ড অ্যাড করতে সমস্যা: " + err.message);
+            recordSetupStep = -1;
+          }
+        } else {
+          askForRecord();
+        }
+        return;
+      }
+
+      // Normal commands
+      if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
           let reply = "আপনার রেকর্ড:\n\n";
@@ -375,93 +455,30 @@
                     reply += `    - ${med.name} (${med.dose}, ${med.frequency}, ${med.durationDays} দিন)\n`;
                   });
                 }
+                if (rec.diseaseDetails) {
+                  reply += `  বিস্তারিত: ${rec.diseaseDetails}\n`;
+                }
                 reply += "\n";
               });
             });
           }
           addMessage(reply);
           updateChart(records);
-
-          // AI পরামর্শ
-          if (records.length > 0) {
-            try {
-              const response = await fetch('/api', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  records: records,
-                  userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও।"
-                })
-              });
-
-              if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-              const data = await response.json();
-              if (data.advice) {
-                addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice, false, true);
-              }
-            } catch (err) {
-              addMessage("AI পরামর্শ পেতে সমস্যা: " + err.message);
-            }
-          }
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + error.message);
         }
       }
-      else if (
-        lower.includes("অ্যাড") ||
-        lower.includes("add") ||
-        lower.includes("যোগ") ||
-        lower.includes("নতুন") ||
-        lower.includes("এন্ট্রি") ||
-        lower.includes("নতুন রেকর্ড") ||
-        lower.includes("সেভ করো") ||
-        lower.includes("রেকর্ড করো")
-      ) {
-        let data = text;
-
-        const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
-        for (const kw of keywords) {
-          if (lower.includes(kw)) {
-            data = text.split(kw)[1]?.trim() || text;
-            break;
-          }
-        }
-
-        const parts = data.split(" ");
-        if (parts.length < 4) {
-          addMessage("ফরম্যাট ঠিক করুন। উদাহরণ:\nঅ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15");
-          return;
-        }
-
-        const diseaseName = parts[0];
-        const readingValue = parts[1] + " " + parts[2];
-        const medicineName = parts[3];
-        const dose = parts[4];
-        const frequency = parts[5] + " " + parts[6];
-        const durationDays = parseInt(parts[7]);
-
-        const medicines = [{
-          name: medicineName,
-          dose: dose,
-          frequency: frequency,
-          durationDays: durationDays
-        }];
-
-        try {
-          const tx = await contract.addDailyRecord(diseaseName, readingValue, medicines, "", "");
-          addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
-          await tx.wait();
-          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
-        } catch (error) {
-          addMessage("অ্যাড করতে সমস্যা: " + error.message);
-        }
+      else if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
+        recordSetupStep = 0;
+        recordData = {};
+        addMessage("ঠিক আছে! নতুন রেকর্ড অ্যাড করছি। প্রথমে রোগের নাম লিখুন:");
+        askForRecord();
       }
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
       }
       else {
-        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি / ওষুধ কী কী\n• অ্যাড করো: [রোগ] [রিডিং] [ওষুধের নাম] [ডোজ] [ফ্রিকোয়েন্সি] [দিন]\n• হাই / হ্যালো");
+        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি\n• অ্যাড করো\n• হাই / হ্যালো");
       }
     };
 
