@@ -104,16 +104,17 @@
       }
 
       try {
-        // Arc Testnet-এর জন্য provider কাস্টমাইজ করা
-        provider = new ethers.BrowserProvider(window.ethereum, {
-          chainId: 5042002,
-          name: "Arc Testnet",
-          ensAddress: null // ENS disable
-        });
-
+        provider = new ethers.BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
+
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== 5042002) {
+          status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
+          addMessage("Arc Testnet-এ সুইচ করুন!");
+          return;
+        }
 
         contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -127,11 +128,11 @@
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
-        // প্রোফাইল চেক
+        // Fixed profile চেক
         let fixedProfile = null;
         try {
           fixedProfile = await contract.getFixedProfile(userAddress);
-          console.log("getFixedProfile সফল হয়েছে:", fixedProfile);
+          console.log("Fixed Profile:", fixedProfile);
           if (fixedProfile.dateOfBirth !== 0n) {
             addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট আছে।");
             fixedProfileSetupStep = -1;
@@ -140,7 +141,7 @@
             let profile = null;
             try {
               profile = await contract.getPatientProfile(userAddress);
-              console.log("getPatientProfile সফল হয়েছে:", profile);
+              console.log("Updatable Profile:", profile);
               if (profile.weightKg > 0n && profile.heightCm > 0n) {
                 addMessage("প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
               } else {
@@ -218,15 +219,15 @@
       addMessage(steps[updatableProfileSetupStep]);
     }
 
-    // Record setup questions
+    // Record setup questions (ডোজ প্রশ্ন যোগ করা হয়েছে)
     function askForRecord() {
       const steps = [
         "রোগের নাম লিখুন (যেমন Diabetes)",
         "রিডিং লিখুন (যেমন 180 mg/dL)",
-        "ওষুধের নাম লিখুন (যেমন Metformin)",
-        "ডোজ লিখুন (যেমন 500mg)",
-        "ফ্রিকোয়েন্সি লিখুন (যেমন 3 times/day)",
-        "কতদিন খাবেন লিখুন (দিন)",
+        "ওষুধের নাম লিখুন (যেমন Metformin, না থাকলে skip)",
+        "ডোজ লিখুন (যেমন 500mg, না থাকলে skip)",
+        "ফ্রিকোয়েন্সি লিখুন (যেমন 3 times/day, না থাকলে skip)",
+        "কতদিন খাবেন লিখুন (দিন, না থাকলে skip)",
         "রোগের বিস্তারিত তথ্য/নোট লিখুন (অপশনাল, না থাকলে skip)",
         "IPFS CID থাকলে দিন (অপশনাল, না থাকলে skip)"
       ];
@@ -286,8 +287,8 @@
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সেট হয়েছে!");
 
-            // updatable profile চেক
             fixedProfileSetupStep = -1;
+            // updatable profile চেক
             try {
               const profile = await contract.getPatientProfile(userAddress);
               if (profile.weightKg > 0n && profile.heightCm > 0n) {
@@ -326,16 +327,16 @@
         } else {
           switch (updatableProfileSetupStep) {
             case 0:
-              profileData.weightKg = parseInt(text);
+              profileData.weightKg = parseInt(text) || 0;
               break;
             case 1:
-              profileData.heightCm = parseInt(text);
+              profileData.heightCm = parseInt(text) || 0;
               break;
             case 2:
-              profileData.allergies = text.split(",").map(a => a.trim());
+              profileData.allergies = text.split(",").map(a => a.trim()).filter(a => a);
               break;
             case 3:
-              profileData.chronicDiseases = text.split(",").map(a => a.trim());
+              profileData.chronicDiseases = text.split(",").map(a => a.trim()).filter(a => a);
               break;
           }
         }
@@ -344,10 +345,10 @@
         if (updatableProfileSetupStep === 4) {
           try {
             const tx = await contract.updateProfile(
-              profileData.weightKg,
-              profileData.heightCm,
-              profileData.allergies,
-              profileData.chronicDiseases
+              profileData.weightKg || 0,
+              profileData.heightCm || 0,
+              profileData.allergies || [],
+              profileData.chronicDiseases || []
             );
             addMessage("প্রোফাইল আপডেট হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
@@ -366,7 +367,7 @@
       // Record setup mode
       if (recordSetupStep >= 0) {
         if (lower === "skip" || lower === "নাই" || lower === "") {
-          if (recordSetupStep >= 6) {
+          if (recordSetupStep === 6 || recordSetupStep === 7) {
             recordData.diseaseDetails = recordSetupStep === 6 ? "" : recordData.diseaseDetails || "";
             recordData.ipfsCid = recordSetupStep === 7 ? "" : recordData.ipfsCid || "";
             recordSetupStep = 8;
@@ -392,7 +393,7 @@
               recordData.frequency = text;
               break;
             case 5:
-              recordData.durationDays = parseInt(text);
+              recordData.durationDays = parseInt(text) || 0;
               break;
             case 6:
               recordData.diseaseDetails = text;
@@ -406,19 +407,30 @@
         recordSetupStep++;
         if (recordSetupStep === 8) {
           try {
-            const medicines = [{
-              name: recordData.medicineName,
-              dose: recordData.dose,
-              frequency: recordData.frequency,
-              durationDays: recordData.durationDays
-            }];
+            const medicines = [];
+            if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
+              medicines.push({
+                name: recordData.medicineName,
+                dose: recordData.dose || "N/A",
+                frequency: recordData.frequency || "N/A",
+                durationDays: recordData.durationDays || 0
+              });
+            }
+
+            console.log("addDailyRecord প্যারামিটার:", {
+              diseaseName: recordData.diseaseName || "N/A",
+              readingValue: recordData.readingValue || "N/A",
+              medicines,
+              ipfsCid: recordData.ipfsCid || "",
+              diseaseDetails: recordData.diseaseDetails || ""
+            });
 
             const tx = await contract.addDailyRecord(
-              recordData.diseaseName,
-              recordData.readingValue,
+              recordData.diseaseName || "",
+              recordData.readingValue || "",
               medicines,
-              recordData.ipfsCid,
-              recordData.diseaseDetails
+              recordData.ipfsCid || "",
+              recordData.diseaseDetails || ""
             );
             addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
@@ -438,6 +450,7 @@
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
+          console.log("getAllDiseaseRecords সফল হয়েছে:", records);
           let reply = "আপনার রেকর্ড:\n\n";
           if (records.length === 0) {
             reply += "আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।";
@@ -467,6 +480,7 @@
           addMessage(reply);
           updateChart(records);
         } catch (error) {
+          console.log("getAllDiseaseRecords এরর:", error.message);
           addMessage("আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।");
         }
       }
