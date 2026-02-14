@@ -128,9 +128,7 @@
 ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।  
 উদাহরণ:  
 • রেকর্ড দেখাও / আমার হিস্ট্রি  
-• অ্যাড করো: Fever 2025-02-10  
-• আমার ওষুধ কী কী?  
-• নতুন ডাটা যোগ করো</div>
+• অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15</div>
     </div>
     <div id="input-area">
       <input type="text" id="userInput" placeholder="জিজ্ঞাসা করুন..." />
@@ -148,15 +146,107 @@
   <canvas id="recordChart" width="500" height="280"></canvas>
 
   <script>
-    // নতুন কন্ট্রাক্টের অ্যাড্রেস (ডেপ্লয় করার পর চেঞ্জ করো)
-    const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1"; // এখানে নতুন অ্যাড্রেস দাও
+    // তোমার নতুন কন্ট্রাক্ট অ্যাড্রেস
+    const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
+    // নতুন কন্ট্রাক্টের ABI (Remix থেকে কপি করা)
     const abi = [
-      {"inputs":[{"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},{"internalType":"string","name":"_gender","type":"string"},{"internalType":"string","name":"_bloodGroup","type":"string"}],"name":"setFixedProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"uint256","name":"_weightKg","type":"uint256"},{"internalType":"uint256","name":"_heightCm","type":"uint256"},{"internalType":"string[]","name":"_allergies","type":"string[]"},{"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}],"name":"updateProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"string","name":"_diseaseName","type":"string"},{"internalType":"string","name":"_readingValue","type":"string"},{"internalType":"tuple[]","name":"_medicines","components":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"dose","type":"string"},{"internalType":"string","name":"frequency","type":"string"},{"internalType":"uint256","name":"durationDays","type":"uint256"}],"type":"tuple[]"},{"internalType":"string","name":"_ipfsCid","type":"string"},{"internalType":"string","name":"_diseaseDetails","type":"string"}],"name":"addDailyRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getAllDiseaseRecords","outputs":[{"components":[{"internalType":"string","name":"diseaseName","type":"string"},{"components":[{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"string","name":"readingValue","type":"string"},{"components":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"dose","type":"string"},{"internalType":"string","name":"frequency","type":"string"},{"internalType":"uint256","name":"durationDays","type":"uint256"}],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},{"internalType":"string","name":"ipfsCid","type":"string"},{"internalType":"address","name":"addedBy","type":"address"},{"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},{"internalType":"uint256","name":"patientWeightKg","type":"uint256"},{"internalType":"uint256","name":"patientHeightCm","type":"uint256"}],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getPatientProfile","outputs":[{"components":[{"internalType":"uint256","name":"weightKg","type":"uint256"},{"internalType":"uint256","name":"heightCm","type":"uint256"},{"internalType":"string[]","name":"allergies","type":"string[]"},{"internalType":"string[]","name":"chronicDiseases","type":"string[]"},{"internalType":"address[]","name":"allowedDoctors","type":"address[]"}],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],"stateMutability":"view","type":"function"}
+      {
+        "inputs": [
+          {"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},
+          {"internalType":"string","name":"_gender","type":"string"},
+          {"internalType":"string","name":"_bloodGroup","type":"string"}
+        ],
+        "name":"setFixedProfile",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"uint256","name":"_weightKg","type":"uint256"},
+          {"internalType":"uint256","name":"_heightCm","type":"uint256"},
+          {"internalType":"string[]","name":"_allergies","type":"string[]"},
+          {"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}
+        ],
+        "name":"updateProfile",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"addAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"removeAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"string","name":"_diseaseName","type":"string"},
+          {"internalType":"string","name":"_readingValue","type":"string"},
+          {"components":[
+            {"internalType":"string","name":"name","type":"string"},
+            {"internalType":"string","name":"dose","type":"string"},
+            {"internalType":"string","name":"frequency","type":"string"},
+            {"internalType":"uint256","name":"durationDays","type":"uint256"}
+          ],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},
+          {"internalType":"string","name":"_ipfsCid","type":"string"},
+          {"internalType":"string","name":"_diseaseDetails","type":"string"}
+        ],
+        "name":"addDailyRecord",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getAllDiseaseRecords",
+        "outputs":[{"components":[
+          {"internalType":"string","name":"diseaseName","type":"string"},
+          {"components":[
+            {"internalType":"uint256","name":"timestamp","type":"uint256"},
+            {"internalType":"string","name":"readingValue","type":"string"},
+            {"components":[
+              {"internalType":"string","name":"name","type":"string"},
+              {"internalType":"string","name":"dose","type":"string"},
+              {"internalType":"string","name":"frequency","type":"string"},
+              {"internalType":"uint256","name":"durationDays","type":"uint256"}
+            ],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},
+            {"internalType":"string","name":"ipfsCid","type":"string"},
+            {"internalType":"address","name":"addedBy","type":"address"},
+            {"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},
+            {"internalType":"uint256","name":"patientWeightKg","type":"uint256"},
+            {"internalType":"uint256","name":"patientHeightCm","type":"uint256"}
+          ],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}
+        ],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],
+        "stateMutability":"view",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getPatientProfile",
+        "outputs":[{"components":[
+          {"internalType":"uint256","name":"weightKg","type":"uint256"},
+          {"internalType":"uint256","name":"heightCm","type":"uint256"},
+          {"internalType":"string[]","name":"allergies","type":"string[]"},
+          {"internalType":"string[]","name":"chronicDiseases","type":"string[]"},
+          {"internalType":"address[]","name":"allowedDoctors","type":"address[]"}
+        ],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],
+        "stateMutability":"view",
+        "type":"function"
+      }
     ];
 
     let provider = null;
@@ -186,6 +276,13 @@
 
       try {
         provider = new ethers.BrowserProvider(window.ethereum);
+        // Arc Testnet-এ ENS নেই, তাই disable করা
+        provider = provider.withNetworkOverride({
+          chainId: 5042002,
+          name: "Arc Testnet",
+          ensAddress: null
+        });
+
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
@@ -202,8 +299,8 @@
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
         addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
 • রেকর্ড দেখাও / আমার হিস্ট্রি  
-• অ্যাড করো: [রোগের নাম] [রিডিং] [ওষুধের লিস্ট]  
-উদাহরণ: অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day`);
+• অ্যাড করো: [রোগ] [রিডিং] [ওষুধের নাম] [ডোজ] [ফ্রিকোয়েন্সি] [দিন]  
+উদাহরণ: অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15`);
 
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
@@ -274,20 +371,24 @@
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
-            for (const disease of records) {
+            records.forEach(disease => {
               reply += `রোগ: ${disease.diseaseName}\n`;
-              for (const rec of disease.dailyRecords) {
-                reply += `  তারিখ: ${new Date(Number(rec.timestamp)*1000).toLocaleString()}\n`;
+              disease.dailyRecords.forEach(rec => {
+                const date = new Date(Number(rec.timestamp) * 1000).toLocaleString();
+                reply += `  তারিখ: ${date}\n`;
                 reply += `  রিডিং: ${rec.readingValue}\n`;
+                reply += `  বয়স: ${rec.patientAgeAtRecord} বছর\n`;
+                reply += `  ওজন: ${rec.patientWeightKg} kg\n`;
+                reply += `  উচ্চতা: ${rec.patientHeightCm} cm\n`;
                 if (rec.medicines.length > 0) {
                   reply += `  ওষুধ:\n`;
-                  for (const med of rec.medicines) {
+                  rec.medicines.forEach(med => {
                     reply += `    - ${med.name} (${med.dose}, ${med.frequency}, ${med.durationDays} দিন)\n`;
-                  }
+                  });
                 }
                 reply += "\n";
-              }
-            }
+              });
+            });
           }
           addMessage(reply);
           updateChart(records);
@@ -298,8 +399,8 @@
               const response = await fetch('/api', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  records: records, // নতুন স্ট্রাকচার
+                body: JSON.stringify({
+                  records: records,
                   userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও।"
                 })
               });
@@ -315,7 +416,7 @@
             }
           }
         } catch (error) {
-          addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
+          addMessage("রেকর্ড লোড করতে সমস্যা: " + error.message);
         }
       }
       else if (
@@ -328,7 +429,6 @@
         lower.includes("সেভ করো") ||
         lower.includes("রেকর্ড করো")
       ) {
-        // উদাহরণ ফরম্যাট: অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15
         let data = text;
 
         const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
@@ -340,13 +440,13 @@
         }
 
         const parts = data.split(" ");
-        if (parts.length < 3) {
+        if (parts.length < 4) {
           addMessage("ফরম্যাট ঠিক করুন। উদাহরণ:\nঅ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15");
           return;
         }
 
         const diseaseName = parts[0];
-        const readingValue = parts[1] + " " + parts[2]; // e.g., "180 mg/dL"
+        const readingValue = parts[1] + " " + parts[2];
         const medicineName = parts[3];
         const dose = parts[4];
         const frequency = parts[5] + " " + parts[6];
@@ -360,7 +460,7 @@
         }];
 
         try {
-          const tx = await contract.addDailyRecord(diseaseName, readingValue, medicines, "", ""); // ipfsCid & diseaseDetails empty
+          const tx = await contract.addDailyRecord(diseaseName, readingValue, medicines, "", "");
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
           await tx.wait();
           addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
@@ -388,41 +488,4 @@
 
       document.getElementById("recordChart").style.display = "block";
 
-      const labels = [];
-      const data = [];
-
-      records.forEach(disease => {
-        disease.dailyRecords.forEach(rec => {
-          labels.push(`${disease.diseaseName} - ${new Date(Number(rec.timestamp)*1000).toLocaleDateString()}`);
-          data.push(Number(rec.readingValue.split(" ")[0]) || 0); // e.g., 180 from "180 mg/dL"
-        });
-      });
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'রিডিং মান',
-            data: data,
-            borderColor: '#009688',
-            backgroundColor: 'rgba(0, 150, 136, 0.2)',
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true },
-            title: { display: true, text: 'রোগের রিডিং টাইমলাইন' }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+      const labels
