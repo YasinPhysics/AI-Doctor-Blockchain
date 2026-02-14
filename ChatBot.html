@@ -58,310 +58,115 @@
   <script>
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
-    const abi = const abi = [
-  {
-    "inputs": [
+    const abi = [
       {
-        "internalType": "uint256",
-        "name": "_dateOfBirth",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "_gender",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_bloodGroup",
-        "type": "string"
-      }
-    ],
-    "name": "setFixedProfile",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_weightKg",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_heightCm",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_allergies",
-        "type": "string[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_chronicDiseases",
-        "type": "string[]"
-      }
-    ],
-    "name": "updateProfile",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_doctor",
-        "type": "address"
-      }
-    ],
-    "name": "addAllowedDoctor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_doctor",
-        "type": "address"
-      }
-    ],
-    "name": "removeAllowedDoctor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_diseaseName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_readingValue",
-        "type": "string"
-      },
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "dose",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "frequency",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "durationDays",
-            "type": "uint256"
-          }
+        "inputs": [
+          {"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},
+          {"internalType":"string","name":"_gender","type":"string"},
+          {"internalType":"string","name":"_bloodGroup","type":"string"}
         ],
-        "internalType": "struct LifeHealthChain.Medicine[]",
-        "name": "_medicines",
-        "type": "tuple[]"
+        "name":"setFixedProfile",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
       },
       {
-        "internalType": "string",
-        "name": "_ipfsCid",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_diseaseDetails",
-        "type": "string"
-      }
-    ],
-    "name": "addDailyRecord",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "patient",
-        "type": "address"
-      }
-    ],
-    "name": "getAllDiseaseRecords",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "diseaseName",
-            "type": "string"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "readingValue",
-                "type": "string"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "string",
-                    "name": "name",
-                    "type": "string"
-                  },
-                  {
-                    "internalType": "string",
-                    "name": "dose",
-                    "type": "string"
-                  },
-                  {
-                    "internalType": "string",
-                    "name": "frequency",
-                    "type": "string"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "durationDays",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct LifeHealthChain.Medicine[]",
-                "name": "medicines",
-                "type": "tuple[]"
-              },
-              {
-                "internalType": "string",
-                "name": "ipfsCid",
-                "type": "string"
-              },
-              {
-                "internalType": "address",
-                "name": "addedBy",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "patientAgeAtRecord",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "patientWeightKg",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "patientHeightCm",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct LifeHealthChain.DailyRecord[]",
-            "name": "dailyRecords",
-            "type": "tuple[]"
-          }
+        "inputs": [
+          {"internalType":"uint256","name":"_weightKg","type":"uint256"},
+          {"internalType":"uint256","name":"_heightCm","type":"uint256"},
+          {"internalType":"string[]","name":"_allergies","type":"string[]"},
+          {"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}
         ],
-        "internalType": "struct LifeHealthChain.DiseaseRecord[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
+        "name":"updateProfile",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
       {
-        "internalType": "address",
-        "name": "patient",
-        "type": "address"
-      }
-    ],
-    "name": "getPatientProfile",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "weightKg",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "heightCm",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string[]",
-            "name": "allergies",
-            "type": "string[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "chronicDiseases",
-            "type": "string[]"
-          },
-          {
-            "internalType": "address[]",
-            "name": "allowedDoctors",
-            "type": "address[]"
-          }
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
         ],
-        "internalType": "struct LifeHealthChain.PatientProfile",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "patient",
-        "type": "address"
-      }
-    ],
-    "name": "getFixedProfile",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "dateOfBirth",
-        "type": "uint256"
+        "name":"addAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
       },
       {
-        "internalType": "string",
-        "name": "gender",
-        "type": "string"
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"removeAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
       },
       {
-        "internalType": "string",
-        "name": "bloodGroup",
-        "type": "string"
+        "inputs": [
+          {"internalType":"string","name":"_diseaseName","type":"string"},
+          {"internalType":"string","name":"_readingValue","type":"string"},
+          {"components":[
+            {"internalType":"string","name":"name","type":"string"},
+            {"internalType":"string","name":"dose","type":"string"},
+            {"internalType":"string","name":"frequency","type":"string"},
+            {"internalType":"uint256","name":"durationDays","type":"uint256"}
+          ],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},
+          {"internalType":"string","name":"_ipfsCid","type":"string"},
+          {"internalType":"string","name":"_diseaseDetails","type":"string"}
+        ],
+        "name":"addDailyRecord",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getAllDiseaseRecords",
+        "outputs":[{"components":[
+          {"internalType":"string","name":"diseaseName","type":"string"},
+          {"components":[
+            {"internalType":"uint256","name":"timestamp","type":"uint256"},
+            {"internalType":"string","name":"readingValue","type":"string"},
+            {"components":[
+              {"internalType":"string","name":"name","type":"string"},
+              {"internalType":"string","name":"dose","type":"string"},
+              {"internalType":"string","name":"frequency","type":"string"},
+              {"internalType":"uint256","name":"durationDays","type":"uint256"}
+            ],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},
+            {"internalType":"string","name":"ipfsCid","type":"string"},
+            {"internalType":"address","name":"addedBy","type":"address"},
+            {"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},
+            {"internalType":"uint256","name":"patientWeightKg","type":"uint256"},
+            {"internalType":"uint256","name":"patientHeightCm","type":"uint256"}
+          ],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}
+        ],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],
+        "stateMutability":"view",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getPatientProfile",
+        "outputs":[{"components":[
+          {"internalType":"uint256","name":"weightKg","type":"uint256"},
+          {"internalType":"uint256","name":"heightCm","type":"uint256"},
+          {"internalType":"string[]","name":"allergies","type":"string[]"},
+          {"internalType":"string[]","name":"chronicDiseases","type":"string[]"},
+          {"internalType":"address[]","name":"allowedDoctors","type":"address[]"}
+        ],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],
+        "stateMutability":"view",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getFixedProfile",
+        "outputs":[
+          {"internalType":"uint256","name":"dateOfBirth","type":"uint256"},
+          {"internalType":"string","name":"gender","type":"string"},
+          {"internalType":"string","name":"bloodGroup","type":"string"}
+        ],
+        "stateMutability":"view",
+        "type":"function"
       }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
+    ];
 
     let provider = null;
     let signer = null;
@@ -370,8 +175,7 @@
     let chartInstance = null;
 
     // Profile setup state
-    let fixedProfileSetupStep = -1;
-    let updatableProfileSetupStep = -1;
+    let profileSetupStep = -1;
     let profileData = {};
 
     // Record setup state
@@ -422,34 +226,34 @@
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
-        // প্রথমে fixed profile চেক
+        // প্রোফাইল চেক (এরর ধরে বাইপাস)
         let fixedProfile = null;
         try {
           fixedProfile = await contract.getFixedProfile(userAddress);
+          if (fixedProfile.dateOfBirth !== 0n) {
+            addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট আছে।");
+            // updatable profile চেক
+            try {
+              const profile = await contract.getPatientProfile(userAddress);
+              if (profile.weightKg > 0 && profile.heightCm > 0) {
+                addMessage("প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
+              } else {
+                addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
+                profileSetupStep = 3; // ওজন থেকে শুরু
+                askForProfile();
+              }
+            } catch (err) {
+              addMessage("আপডেটযোগ্য প্রোফাইল চেক করতে সমস্যা। আসুন এগুলো দিন।");
+              profileSetupStep = 3; // ওজন থেকে শুরু
+              askForProfile();
+            }
+          } else {
+            throw new Error("Fixed profile not set");
+          }
         } catch (err) {
-          // এরর এলেও প্রশ্ন শুরু করবে
-        }
-
-        if (!fixedProfile || fixedProfile.dateOfBirth === 0n) {
           addMessage("আপনার ফিক্সড প্রোফাইল (জন্ম তারিখ, লিঙ্গ, ব্লাড গ্রুপ) সেট করা হয়নি। আসুন প্রথমে এগুলো দিন।");
           fixedProfileSetupStep = 0;
-          askForFixedProfile();
-        } else {
-          // fixed profile আছে, এখন updatable profile চেক
-          let profile = null;
-          try {
-            profile = await contract.getPatientProfile(userAddress);
-          } catch (err) {
-            // এরর এলেও প্রশ্ন শুরু করবে
-          }
-
-          if (!profile || profile.weightKg === 0n || profile.heightCm === 0n) {
-            addMessage("আপনার আপডেটযোগ্য প্রোফাইল (ওজন, উচ্চতা ইত্যাদি) পুরোপুরি সেট করা হয়নি। আসুন এগুলো দিন।");
-            updatableProfileSetupStep = 0;
-            askForUpdatableProfile();
-          } else {
-            addMessage("আপনার প্রোফাইল ইতিমধ্যে সেট আছে। এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
-          }
+          askForProfile();
         }
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
@@ -542,24 +346,24 @@
         if (lower === "skip" || lower === "নাই" || lower === "") {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
           return;
-        } else {
-          switch (fixedProfileSetupStep) {
-            case 0:
-              const [day, month, year] = text.split("-");
-              if (!day || !month || !year) {
-                addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
-                return;
-              }
-              const date = new Date(year, month - 1, day);
-              profileData.dateOfBirth = Math.floor(date.getTime() / 1000);
-              break;
-            case 1:
-              profileData.gender = text;
-              break;
-            case 2:
-              profileData.bloodGroup = text;
-              break;
-          }
+        }
+
+        switch (fixedProfileSetupStep) {
+          case 0:
+            const [day, month, year] = text.split("-");
+            if (!day || !month || !year) {
+              addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
+              return;
+            }
+            const date = new Date(year, month - 1, day);
+            profileData.dateOfBirth = Math.floor(date.getTime() / 1000);
+            break;
+          case 1:
+            profileData.gender = text;
+            break;
+          case 2:
+            profileData.bloodGroup = text;
+            break;
         }
 
         fixedProfileSetupStep++;
@@ -574,19 +378,21 @@
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সেট হয়েছে!");
 
-            // এখন updatable profile চেক করো
+            // updatable profile চেক
             fixedProfileSetupStep = -1;
             try {
               const profile = await contract.getPatientProfile(userAddress);
-              if (profile.weightKg === 0n || profile.heightCm === 0n) {
+              if (profile.weightKg > 0 && profile.heightCm > 0) {
+                addMessage("আপডেটযোগ্য প্রোফাইল ইতিমধ্যে সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
+              } else {
                 addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
                 updatableProfileSetupStep = 0;
                 askForUpdatableProfile();
-              } else {
-                addMessage("আপনার প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
               }
             } catch (err) {
-              addMessage("প্রোফাইল চেক করতে সমস্যা: " + err.message);
+              addMessage("আপডেটযোগ্য প্রোফাইল চেক করতে সমস্যা। আসুন এগুলো দিন।");
+              updatableProfileSetupStep = 0;
+              askForUpdatableProfile();
             }
           } catch (err) {
             addMessage("ফিক্সড প্রোফাইল সেট করতে সমস্যা: " + err.message);
@@ -651,7 +457,73 @@
 
       // Record setup mode
       if (recordSetupStep >= 0) {
-        // ... (আগের লজিক রাখো)
+        if (lower === "skip" || lower === "নাই" || lower === "") {
+          if (recordSetupStep >= 6) {
+            recordData.diseaseDetails = recordSetupStep === 6 ? "" : recordData.diseaseDetails || "";
+            recordData.ipfsCid = recordSetupStep === 7 ? "" : recordData.ipfsCid || "";
+            recordSetupStep = 8;
+          } else {
+            addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
+            return;
+          }
+        } else {
+          switch (recordSetupStep) {
+            case 0:
+              recordData.diseaseName = text;
+              break;
+            case 1:
+              recordData.readingValue = text;
+              break;
+            case 2:
+              recordData.medicineName = text;
+              break;
+            case 3:
+              recordData.dose = text;
+              break;
+            case 4:
+              recordData.frequency = text;
+              break;
+            case 5:
+              recordData.durationDays = parseInt(text);
+              break;
+            case 6:
+              recordData.diseaseDetails = text;
+              break;
+            case 7:
+              recordData.ipfsCid = text;
+              break;
+          }
+        }
+
+        recordSetupStep++;
+        if (recordSetupStep === 8) {
+          try {
+            const medicines = [{
+              name: recordData.medicineName,
+              dose: recordData.dose,
+              frequency: recordData.frequency,
+              durationDays: recordData.durationDays
+            }];
+
+            const tx = await contract.addDailyRecord(
+              recordData.diseaseName,
+              recordData.readingValue,
+              medicines,
+              recordData.ipfsCid,
+              recordData.diseaseDetails
+            );
+            addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
+            await tx.wait();
+            addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
+            recordSetupStep = -1;
+          } catch (err) {
+            addMessage("রেকর্ড অ্যাড করতে সমস্যা: " + err.message);
+            recordSetupStep = -1;
+          }
+        } else {
+          askForRecord();
+        }
+        return;
       }
 
       // Normal commands
@@ -662,7 +534,27 @@
           if (records.length === 0) {
             reply += "আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।";
           } else {
-            // ... (আগের রিপ্লাই লজিক রাখো)
+            records.forEach(disease => {
+              reply += `রোগ: ${disease.diseaseName}\n`;
+              disease.dailyRecords.forEach(rec => {
+                const date = new Date(Number(rec.timestamp) * 1000).toLocaleString();
+                reply += `  তারিখ: ${date}\n`;
+                reply += `  রিডিং: ${rec.readingValue}\n`;
+                reply += `  বয়স: ${rec.patientAgeAtRecord} বছর\n`;
+                reply += `  ওজন: ${rec.patientWeightKg} kg\n`;
+                reply += `  উচ্চতা: ${rec.patientHeightCm} cm\n`;
+                if (rec.medicines.length > 0) {
+                  reply += `  ওষুধ:\n`;
+                  rec.medicines.forEach(med => {
+                    reply += `    - ${med.name} (${med.dose}, ${med.frequency}, ${med.durationDays} দিন)\n`;
+                  });
+                }
+                if (rec.diseaseDetails) {
+                  reply += `  বিস্তারিত: ${rec.diseaseDetails}\n`;
+                }
+                reply += "\n";
+              });
+            });
           }
           addMessage(reply);
           updateChart(records);
@@ -685,7 +577,52 @@
     };
 
     function updateChart(records) {
-      // ... (আগের চার্ট লজিক রাখো)
+      const ctx = document.getElementById("recordChart").getContext("2d");
+
+      if (chartInstance) chartInstance.destroy();
+
+      if (records.length === 0) {
+        document.getElementById("recordChart").style.display = "none";
+        return;
+      }
+
+      document.getElementById("recordChart").style.display = "block";
+
+      const labels = [];
+      const data = [];
+
+      records.forEach(disease => {
+        disease.dailyRecords.forEach(rec => {
+          labels.push(`${disease.diseaseName} - ${new Date(Number(rec.timestamp) * 1000).toLocaleDateString()}`);
+          const value = parseFloat(rec.readingValue.split(" ")[0]) || 0;
+          data.push(value);
+        });
+      });
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'রিডিং মান',
+            data: data,
+            borderColor: '#009688',
+            backgroundColor: 'rgba(0, 150, 136, 0.2)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            title: { display: true, text: 'রোগের রিডিং টাইমলাইন' }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
     }
   </script>
 </body>
