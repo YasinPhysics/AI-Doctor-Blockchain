@@ -319,29 +319,6 @@
           }
           addMessage(reply);
           updateChart(records);
-
-          // Groq AI পরামর্শ
-          if (records.length > 0) {
-            try {
-              const response = await fetch('/api', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  records: records.map(r => ({ encryptedData: r.encryptedData, timestamp: r.timestamp.toString() })),
-                  userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও।"
-                })
-              });
-
-              if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-              const data = await response.json();
-              if (data.advice) {
-                addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice, false, true);
-              }
-            } catch (err) {
-              addMessage("AI পরামর্শ পেতে সমস্যা: " + err.message);
-            }
-          }
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
