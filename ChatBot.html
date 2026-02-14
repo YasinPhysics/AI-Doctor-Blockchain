@@ -7,10 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-  <!-- nft.storage for IPFS -->
-  <script src="https://unpkg.com/nft.storage/dist/bundle.min.js"></script>
   <style>
-    /* তোমার আগের স্টাইল রাখো */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       margin: 0; 
@@ -60,12 +57,6 @@
       color: #004d40; 
       margin-right: auto; 
       border-bottom-left-radius: 4px; 
-    }
-    .ai { 
-      background: #fff3e0; 
-      color: #ef6c00; 
-      margin-right: auto; 
-      border-left: 4px solid #ef6c00; 
     }
     #input-area { 
       display: flex; 
@@ -154,8 +145,8 @@
     const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
 
     const abi = [
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_cid","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"cid","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_encryptedData","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
     ];
 
     let provider = null;
@@ -166,30 +157,8 @@
 
     const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
-    const nftStorageClient = new NFTStorage({ token: process.env.NFT_STORAGE_KEY });
-
     function encryptData(data) {
       return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
-    }
-
-    function decryptData(ciphertext) {
-      const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
-      return bytes.toString(CryptoJS.enc.Utf8);
-    }
-
-    async function uploadToIPFS(data) {
-      const encrypted = encryptData(data);
-      const blob = new Blob([encrypted], { type: 'text/plain' });
-      const cid = await nftStorageClient.storeBlob(blob);
-      return cid.toString();
-    }
-
-    async function fetchFromIPFS(cid) {
-      const url = `https://${cid}.ipfs.nftstorage.link`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("IPFS fetch failed");
-      const encrypted = await response.text();
-      return decryptData(encrypted);
     }
 
     function addMessage(text, isUser = false, isAI = false) {
@@ -227,15 +196,12 @@
         contract = new ethers.Contract(contractAddress, abi, signer);
 
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-        addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
-• রেকর্ড দেখাও / আমার হিস্ট্রি  
-• অ্যাড করো: [ডাটা]  
-• আমার ওষুধ কী কী?  
-• নতুন ডাটা যোগ করো`);
+        addMessage(`স্বাগতম! এখন আপনি রেকর্ড দেখতে বা অ্যাড করতে পারেন।`);
 
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
+        document.getElementById("userInput").disabled = false;
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা: " + error.message);
@@ -252,6 +218,7 @@
       document.getElementById("connectBtn").style.display = "block";
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
+      document.getElementById("userInput").disabled = true;
 
       addMessage("আপনি লগআউট / ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
 
@@ -300,18 +267,13 @@
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
-            for (const rec of records) {
-              const cid = rec.cid;
-              try {
-                const decrypted = await fetchFromIPFS(cid);
-                reply += `রেকর্ড: ${decrypted} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
-                if (decrypted.toLowerCase().includes("medicine") || decrypted.toLowerCase().includes("ওষুধ")) {
-                  medicines.push(decrypted);
-                }
-              } catch (err) {
-                reply += `রেকর্ড (CID: ${cid}): ডাটা লোড করতে সমস্যা\n`;
+            records.forEach((rec, i) => {
+              const data = rec.encryptedData;
+              reply += `রেকর্ড ${i+1}: ${data} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
+              if (data.toLowerCase().includes("medicine") || data.toLowerCase().includes("ওষুধ") || data.toLowerCase().includes("paracetamol") || data.toLowerCase().includes("aspirin")) {
+                medicines.push(data);
               }
-            }
+            });
             if (medicines.length > 0) {
               reply += "\nআপনার ওষুধের লিস্ট:\n" + medicines.join("\n");
             }
@@ -350,15 +312,15 @@
           return;
         }
 
+        const encrypted = encryptData(data);
+
         try {
-          addMessage("ডাটা এনক্রিপ্ট + IPFS-এ আপলোড হচ্ছে...");
-          const cid = await uploadToIPFS(data);
-          const tx = await contract.addRecord(userAddress, cid);
+          const tx = await contract.addRecord(userAddress, encrypted);
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
           await tx.wait();
-          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে (CID: " + cid + ")। 'রেকর্ড দেখাও' লিখে দেখুন।");
+          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
         } catch (error) {
-          addMessage("অ্যাড করতে সমস্যা: " + error.message);
+          addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
@@ -384,8 +346,12 @@
       const labels = records.map((_, i) => `রেকর্ড ${i+1}`);
       const timestamps = records.map(rec => Number(rec.timestamp));
       const colors = records.map(rec => {
-        // CID থেকে ডাটা ডিক্রিপ্ট না করে সিম্পল চেক (যদি CID হয়)
-        return "#3498db"; // ডিফল্ট
+        const data = rec.encryptedData.toLowerCase();
+        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
+        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
+        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
+        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad";
+        return "#3498db";
       });
 
       chartInstance = new Chart(ctx, {
@@ -404,7 +370,7 @@
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'রেকর্ডের টাইমলাইন' }
+            title: { display: true, text: 'রেকর্ডের টাইমলাইন (রোগ/ওষুধ অনুসারে কালার)' }
           },
           scales: {
             y: { beginAtZero: true, title: { display: true, text: 'Timestamp' } }
