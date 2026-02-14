@@ -59,14 +59,8 @@
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
     const abi = [
-      {"inputs":[{"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},{"internalType":"string","name":"_gender","type":"string"},{"internalType":"string","name":"_bloodGroup","type":"string"}],"name":"setFixedProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"uint256","name":"_weightKg","type":"uint256"},{"internalType":"uint256","name":"_heightCm","type":"uint256"},{"internalType":"string[]","name":"_allergies","type":"string[]"},{"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}],"name":"updateProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"_doctor","type":"address"}],"name":"addAllowedDoctor","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"_doctor","type":"address"}],"name":"removeAllowedDoctor","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"string","name":"_diseaseName","type":"string"},{"internalType":"string","name":"_readingValue","type":"string"},{"components":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"dose","type":"string"},{"internalType":"string","name":"frequency","type":"string"},{"internalType":"uint256","name":"durationDays","type":"uint256"}],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},{"internalType":"string","name":"_ipfsCid","type":"string"},{"internalType":"string","name":"_diseaseDetails","type":"string"}],"name":"addDailyRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getAllDiseaseRecords","outputs":[{"components":[{"internalType":"string","name":"diseaseName","type":"string"},{"components":[{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"string","name":"readingValue","type":"string"},{"components":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"dose","type":"string"},{"internalType":"string","name":"frequency","type":"string"},{"internalType":"uint256","name":"durationDays","type":"uint256"}],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},{"internalType":"string","name":"ipfsCid","type":"string"},{"internalType":"address","name":"addedBy","type":"address"},{"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},{"internalType":"uint256","name":"patientWeightKg","type":"uint256"},{"internalType":"uint256","name":"patientHeightCm","type":"uint256"}],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getPatientProfile","outputs":[{"components":[{"internalType":"uint256","name":"weightKg","type":"uint256"},{"internalType":"uint256","name":"heightCm","type":"uint256"},{"internalType":"string[]","name":"allergies","type":"string[]"},{"internalType":"string[]","name":"chronicDiseases","type":"string[]"},{"internalType":"address[]","name":"allowedDoctors","type":"address[]"}],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getFixedProfile","outputs":[{"internalType":"uint256","name":"dateOfBirth","type":"uint256"},{"internalType":"string","name":"gender","type":"string"},{"internalType":"string","name":"bloodGroup","type":"string"}],"stateMutability":"view","type":"function"}
+      // তোমার নতুন কন্ট্রাক্টের ABI (আগের মেসেজ থেকে কপি করো বা Remix থেকে নাও)
+      // ... (পুরো ABI এখানে পেস্ট করো)
     ];
 
     let provider = null;
@@ -132,7 +126,6 @@
           const fixedProfile = await contract.getFixedProfile(userAddress);
           if (fixedProfile.dateOfBirth === 0n) throw new Error("Fixed profile not set");
         } catch (err) {
-          // এরর এলেও থামবে না — প্রশ্ন শুরু করবে
           addMessage("আপনার প্রোফাইল সেট করা হয়নি। আসুন প্রথমে আপনার তথ্য দিন।");
           profileSetupStep = 0;
           askForProfile();
@@ -267,6 +260,17 @@
             );
             addMessage("প্রোফাইল সেট হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
+
+            // এখন আপডেটযোগ্য প্রোফাইল সেট করো
+            const tx2 = await contract.updateProfile(
+              profileData.weightKg,
+              profileData.heightCm,
+              profileData.allergies,
+              profileData.chronicDiseases
+            );
+            addMessage("প্রোফাইল আপডেট হচ্ছে... Tx: " + tx2.hash);
+            await tx2.wait();
+
             addMessage("প্রোফাইল সেট হয়েছে! এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
             profileSetupStep = -1;
           } catch (err) {
@@ -383,7 +387,6 @@
           addMessage(reply);
           updateChart(records);
         } catch (error) {
-          // এরর এলেও সুন্দর মেসেজ দেখাবে
           addMessage("আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।");
         }
       }
