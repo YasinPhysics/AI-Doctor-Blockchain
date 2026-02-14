@@ -19,7 +19,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
 ইউজারের প্রশ্ন/মেসেজ: ${userMessage}
 
-উত্তর বাংলায় দাও,  সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
+উত্তর বাংলায় দাও, সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -28,7 +28,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768",  // এটা এখন কাজ করবে (ফ্রি + দারুণ)
+        model: "llama3-70b-8192",  // এটা এখন কাজ করবে (ফ্রি + দারুণ)
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
