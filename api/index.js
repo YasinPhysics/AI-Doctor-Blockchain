@@ -19,7 +19,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
 ইউজারের প্রশ্ন/মেসেজ: ${userMessage}
 
-উত্তর বাংলায় দাও, সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
+উত্তর বাংলায় দাও,  সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
