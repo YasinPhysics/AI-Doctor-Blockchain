@@ -21,14 +21,14 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
 উত্তর বাংলায় দাও, সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
 
-    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROK_API_KEY}`
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "grok-1-latest",  // এখানে চেঞ্জ করা হয়েছে
+        model: "gpt-3.5-turbo",  // ফ্রি ক্রেডিটে এটা সবচেয়ে ভালো কাজ করে
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
@@ -37,7 +37,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Grok API error: ${response.status} - ${errText}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${errText}`);
     }
 
     const data = await response.json();
@@ -45,7 +45,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
     res.status(200).json({ advice });
   } catch (error) {
-    console.error("Grok API error:", error);
+    console.error("OpenAI API error:", error);
     res.status(500).json({ error: 'AI request failed: ' + error.message });
   }
 }
