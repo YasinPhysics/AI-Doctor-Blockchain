@@ -114,7 +114,7 @@
       display: block; 
       max-width: 100%; 
       border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+      box-shadow: 0 4px 15px rgba(0,0,0,0. amplio08); 
     }
   </style>
 </head>
@@ -164,7 +164,7 @@
     const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
     function encryptData(data) {
-      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
+     :      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
     }
 
     function decryptData(ciphertext) {
@@ -181,7 +181,6 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    // ওয়ালেট কানেক্ট ফাংশন
     async function connectWallet() {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
@@ -214,11 +213,9 @@
 • আমার ওষুধ কী কী?  
 • নতুন ডাটা যোগ করো`);
 
-        // বাটনগুলো enable করো
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
-        document.getElementById("userInput").disabled = false;
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা: " + error.message);
@@ -235,7 +232,6 @@
       document.getElementById("connectBtn").style.display = "block";
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
-      document.getElementById("userInput").disabled = true;
 
       addMessage("আপনি লগআউট / ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
 
@@ -245,11 +241,10 @@
       }
     }
 
-    // বাটনগুলোর event listener
-    document.getElementById("connectBtn").addEventListener('click', connectWallet);
-    document.getElementById("logoutBtn").addEventListener('click', disconnectWallet);
+    document.getElementById("connectBtn").onclick = connectWallet;
+    document.getElementById("logoutBtn").onclick = disconnectWallet;
 
-    document.getElementById("sendBtn").addEventListener('click', async () => {
+    document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
       if (!text) return;
@@ -285,18 +280,13 @@
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
-            for (const rec of records) {
-              const cid = rec.cid;
-              try {
-                const decrypted = await fetchFromIPFS(cid);
-                reply += `রেকর্ড: ${decrypted} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
-                if (decrypted.toLowerCase().includes("medicine") || decrypted.toLowerCase().includes("ওষুধ")) {
-                  medicines.push(decrypted);
-                }
-              } catch (err) {
-                reply += `রেকর্ড (CID: ${cid}): ডাটা লোড করতে সমস্যা\n`;
+            records.forEach((rec, i) => {
+              const data = rec.encryptedData;
+              reply += `রেকর্ড ${i+1}: ${data} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
+              if (data.toLowerCase().includes("medicine") || data.toLowerCase().includes("ওষুধ") || data.toLowerCase().includes("paracetamol") || data.toLowerCase().includes("aspirin")) {
+                medicines.push(data);
               }
-            }
+            });
             if (medicines.length > 0) {
               reply += "\nআপনার ওষুধের লিস্ট:\n" + medicines.join("\n");
             }
@@ -358,15 +348,15 @@
           return;
         }
 
+        const encrypted = encryptData(data);
+
         try {
-          addMessage("ডাটা এনক্রিপ্ট + IPFS-এ আপলোড হচ্ছে...");
-          const cid = await uploadToIPFS(data);
-          const tx = await contract.addRecord(userAddress, cid);
+          const tx = await contract.addRecord(userAddress, encrypted);
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
           await tx.wait();
-          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে (CID: " + cid + ")। 'রেকর্ড দেখাও' লিখে দেখুন।");
+          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
         } catch (error) {
-          addMessage("অ্যাড করতে সমস্যা: " + error.message);
+          addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
