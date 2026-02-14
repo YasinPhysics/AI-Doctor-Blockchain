@@ -8,114 +8,24 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      margin: 0; 
-      padding: 20px; 
-      background: linear-gradient(135deg, #e0f7fa, #b2ebf2); 
-      color: #333; 
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); color: #333; }
     h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
-    #chat-container { 
-      max-width: 720px; 
-      margin: 0 auto 20px; 
-      background: white; 
-      border-radius: 16px; 
-      box-shadow: 0 6px 25px rgba(0,0,0,0.12); 
-      overflow: hidden; 
-    }
-    #chat-header { 
-      background: linear-gradient(90deg, #009688, #00796b); 
-      color: white; 
-      padding: 18px; 
-      text-align: center; 
-      font-weight: bold; 
-      font-size: 1.3em; 
-    }
-    #chat-body { 
-      height: 420px; 
-      overflow-y: auto; 
-      padding: 20px; 
-      background: #f8f9fa; 
-    }
-    .message { 
-      margin: 14px 0; 
-      padding: 14px 20px; 
-      border-radius: 20px; 
-      max-width: 82%; 
-      line-height: 1.5; 
-      word-wrap: break-word; 
-    }
-    .user { 
-      background: #009688; 
-      color: white; 
-      margin-left: auto; 
-      border-bottom-right-radius: 4px; 
-    }
-    .bot { 
-      background: #e0f2f1; 
-      color: #004d40; 
-      margin-right: auto; 
-      border-bottom-left-radius: 4px; 
-    }
-    .ai { 
-      background: #fff3e0; 
-      color: #ef6c00; 
-      margin-right: auto; 
-      border-left: 4px solid #ef6c00; 
-    }
-    #input-area { 
-      display: flex; 
-      padding: 16px; 
-      background: white; 
-      border-top: 1px solid #e0e0e0; 
-    }
-    #userInput { 
-      flex: 1; 
-      padding: 14px 18px; 
-      border: 1px solid #ccc; 
-      border-radius: 30px; 
-      outline: none; 
-      font-size: 1em; 
-    }
-    #sendBtn { 
-      margin-left: 12px; 
-      padding: 14px 28px; 
-      background: #009688; 
-      color: white; 
-      border: none; 
-      border-radius: 30px; 
-      cursor: pointer; 
-      font-weight: bold; 
-    }
-    .auth-buttons { 
-      text-align: center; 
-      margin: 20px 0; 
-    }
-    #connectBtn, #logoutBtn { 
-      padding: 14px 32px; 
-      border: none; 
-      border-radius: 30px; 
-      cursor: pointer; 
-      font-size: 1.1em; 
-      margin: 0 12px; 
-    }
+    #chat-container { max-width: 720px; margin: 0 auto 20px; background: white; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); overflow: hidden; }
+    #chat-header { background: linear-gradient(90deg, #009688, #00796b); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.3em; }
+    #chat-body { height: 420px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
+    .message { margin: 14px 0; padding: 14px 20px; border-radius: 20px; max-width: 82%; line-height: 1.5; word-wrap: break-word; }
+    .user { background: #009688; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; border-bottom-left-radius: 4px; }
+    .ai { background: #fff3e0; color: #ef6c00; margin-right: auto; border-left: 4px solid #ef6c00; }
+    #input-area { display: flex; padding: 16px; background: white; border-top: 1px solid #e0e0e0; }
+    #userInput { flex: 1; padding: 14px 18px; border: 1px solid #ccc; border-radius: 30px; outline: none; font-size: 1em; }
+    #sendBtn { margin-left: 12px; padding: 14px 28px; background: #009688; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; }
+    .auth-buttons { text-align: center; margin: 20px 0; }
+    #connectBtn, #logoutBtn { padding: 14px 32px; border: none; border-radius: 30px; cursor: pointer; font-size: 1.1em; margin: 0 12px; }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
-    #status { 
-      text-align: center; 
-      margin: 15px; 
-      color: #444; 
-      font-size: 1.05em; 
-      font-weight: 500; 
-    }
-    canvas { 
-      margin: 25px auto; 
-      display: block; 
-      max-width: 100%; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
-    }
+    #status { text-align: center; margin: 15px; color: #444; font-size: 1.05em; font-weight: 500; }
+    canvas { margin: 25px auto; display: block; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
   </style>
 </head>
 <body>
@@ -149,113 +59,14 @@
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
     const abi = [
-      {
-        "inputs": [
-          {"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},
-          {"internalType":"string","name":"_gender","type":"string"},
-          {"internalType":"string","name":"_bloodGroup","type":"string"}
-        ],
-        "name":"setFixedProfile",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"uint256","name":"_weightKg","type":"uint256"},
-          {"internalType":"uint256","name":"_heightCm","type":"uint256"},
-          {"internalType":"string[]","name":"_allergies","type":"string[]"},
-          {"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}
-        ],
-        "name":"updateProfile",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"address","name":"_doctor","type":"address"}
-        ],
-        "name":"addAllowedDoctor",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"address","name":"_doctor","type":"address"}
-        ],
-        "name":"removeAllowedDoctor",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"string","name":"_diseaseName","type":"string"},
-          {"internalType":"string","name":"_readingValue","type":"string"},
-          {"components":[
-            {"internalType":"string","name":"name","type":"string"},
-            {"internalType":"string","name":"dose","type":"string"},
-            {"internalType":"string","name":"frequency","type":"string"},
-            {"internalType":"uint256","name":"durationDays","type":"uint256"}
-          ],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},
-          {"internalType":"string","name":"_ipfsCid","type":"string"},
-          {"internalType":"string","name":"_diseaseDetails","type":"string"}
-        ],
-        "name":"addDailyRecord",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
-        "name":"getAllDiseaseRecords",
-        "outputs":[{"components":[
-          {"internalType":"string","name":"diseaseName","type":"string"},
-          {"components":[
-            {"internalType":"uint256","name":"timestamp","type":"uint256"},
-            {"internalType":"string","name":"readingValue","type":"string"},
-            {"components":[
-              {"internalType":"string","name":"name","type":"string"},
-              {"internalType":"string","name":"dose","type":"string"},
-              {"internalType":"string","name":"frequency","type":"string"},
-              {"internalType":"uint256","name":"durationDays","type":"uint256"}
-            ],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},
-            {"internalType":"string","name":"ipfsCid","type":"string"},
-            {"internalType":"address","name":"addedBy","type":"address"},
-            {"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},
-            {"internalType":"uint256","name":"patientWeightKg","type":"uint256"},
-            {"internalType":"uint256","name":"patientHeightCm","type":"uint256"}
-          ],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}
-        ],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],
-        "stateMutability":"view",
-        "type":"function"
-      },
-      {
-        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
-        "name":"getPatientProfile",
-        "outputs":[{"components":[
-          {"internalType":"uint256","name":"weightKg","type":"uint256"},
-          {"internalType":"uint256","name":"heightCm","type":"uint256"},
-          {"internalType":"string[]","name":"allergies","type":"string[]"},
-          {"internalType":"string[]","name":"chronicDiseases","type":"string[]"},
-          {"internalType":"address[]","name":"allowedDoctors","type":"address[]"}
-        ],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],
-        "stateMutability":"view",
-        "type":"function"
-      },
-      {
-        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
-        "name":"getFixedProfile",
-        "outputs":[
-          {"internalType":"uint256","name":"dateOfBirth","type":"uint256"},
-          {"internalType":"string","name":"gender","type":"string"},
-          {"internalType":"string","name":"bloodGroup","type":"string"}
-        ],
-        "stateMutability":"view",
-        "type":"function"
-      }
+      {"inputs":[{"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},{"internalType":"string","name":"_gender","type":"string"},{"internalType":"string","name":"_bloodGroup","type":"string"}],"name":"setFixedProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"_weightKg","type":"uint256"},{"internalType":"uint256","name":"_heightCm","type":"uint256"},{"internalType":"string[]","name":"_allergies","type":"string[]"},{"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}],"name":"updateProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"_doctor","type":"address"}],"name":"addAllowedDoctor","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"_doctor","type":"address"}],"name":"removeAllowedDoctor","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"string","name":"_diseaseName","type":"string"},{"internalType":"string","name":"_readingValue","type":"string"},{"components":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"dose","type":"string"},{"internalType":"string","name":"frequency","type":"string"},{"internalType":"uint256","name":"durationDays","type":"uint256"}],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},{"internalType":"string","name":"_ipfsCid","type":"string"},{"internalType":"string","name":"_diseaseDetails","type":"string"}],"name":"addDailyRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getAllDiseaseRecords","outputs":[{"components":[{"internalType":"string","name":"diseaseName","type":"string"},{"components":[{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"string","name":"readingValue","type":"string"},{"components":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"dose","type":"string"},{"internalType":"string","name":"frequency","type":"string"},{"internalType":"uint256","name":"durationDays","type":"uint256"}],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},{"internalType":"string","name":"ipfsCid","type":"string"},{"internalType":"address","name":"addedBy","type":"address"},{"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},{"internalType":"uint256","name":"patientWeightKg","type":"uint256"},{"internalType":"uint256","name":"patientHeightCm","type":"uint256"}],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getPatientProfile","outputs":[{"components":[{"internalType":"uint256","name":"weightKg","type":"uint256"},{"internalType":"uint256","name":"heightCm","type":"uint256"},{"internalType":"string[]","name":"allergies","type":"string[]"},{"internalType":"string[]","name":"chronicDiseases","type":"string[]"},{"internalType":"address[]","name":"allowedDoctors","type":"address[]"}],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getFixedProfile","outputs":[{"internalType":"uint256","name":"dateOfBirth","type":"uint256"},{"internalType":"string","name":"gender","type":"string"},{"internalType":"string","name":"bloodGroup","type":"string"}],"stateMutability":"view","type":"function"}
     ];
 
     let provider = null;
@@ -317,23 +128,22 @@
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
-        // প্রোফাইল চেক (এরর ধরে বাইপাস)
+        // Fixed profile চেক
         let fixedProfile = null;
         try {
           fixedProfile = await contract.getFixedProfile(userAddress);
           console.log("getFixedProfile সফল হয়েছে:", fixedProfile);
           if (fixedProfile.dateOfBirth !== 0n) {
-            addMessage("আপনার ফিক্সড প্রোফাইল (জন্ম তারিখ, লিঙ্গ, ব্লাড গ্রুপ) ইতিমধ্যে সেট আছে।");
+            addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট আছে।");
             fixedProfileSetupStep = -1;
 
-            // updatable profile চেক
+            // Updatable profile চেক
             let profile = null;
             try {
               profile = await contract.getPatientProfile(userAddress);
               console.log("getPatientProfile সফল হয়েছে:", profile);
               if (profile.weightKg > 0n && profile.heightCm > 0n) {
                 addMessage("প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
-                updatableProfileSetupStep = -1;
               } else {
                 addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
                 updatableProfileSetupStep = 0;
@@ -604,6 +414,14 @@
               durationDays: recordData.durationDays
             }];
 
+            console.log("addDailyRecord প্যারামিটার:", {
+              diseaseName: recordData.diseaseName,
+              readingValue: recordData.readingValue,
+              medicines,
+              ipfsCid: recordData.ipfsCid,
+              diseaseDetails: recordData.diseaseDetails
+            });
+
             const tx = await contract.addDailyRecord(
               recordData.diseaseName,
               recordData.readingValue,
@@ -629,6 +447,7 @@
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
+          console.log("getAllDiseaseRecords সফল হয়েছে:", records);
           let reply = "আপনার রেকর্ড:\n\n";
           if (records.length === 0) {
             reply += "আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।";
@@ -658,6 +477,7 @@
           addMessage(reply);
           updateChart(records);
         } catch (error) {
+          console.log("getAllDiseaseRecords এরর:", error.message);
           addMessage("আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।");
         }
       }
