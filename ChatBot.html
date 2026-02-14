@@ -114,7 +114,7 @@
       display: block; 
       max-width: 100%; 
       border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+      box-shadow: 0 4px 15px rgba(0,0,0,0. amplio08); 
     }
   </style>
 </head>
@@ -161,11 +161,10 @@
     let userAddress = null;
     let chartInstance = null;
 
-    // সিম্পল এনক্রিপশন কী (টেস্টের জন্য)
     const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
     function encryptData(data) {
-      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
+     :      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
     }
 
     function decryptData(ciphertext) {
@@ -260,7 +259,6 @@
 
       const lower = text.toLowerCase();
 
-      // রেকর্ড দেখার কমান্ড
       if (
         lower.includes("দেখাও") ||
         lower.includes("রেকর্ড") ||
@@ -322,8 +320,6 @@
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
-
-      // রেকর্ড অ্যাড করা
       else if (
         lower.includes("অ্যাড") ||
         lower.includes("add") ||
@@ -363,13 +359,9 @@
           addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
-
-      // গ্রিটিং
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
       }
-
-      // ডিফল্ট
       else {
         addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি / ওষুধ কী কী\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
