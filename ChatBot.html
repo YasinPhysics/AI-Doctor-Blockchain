@@ -7,7 +7,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <!-- nft.storage for IPFS -->
+  <script src="https://unpkg.com/nft.storage/dist/bundle.min.js"></script>
   <style>
+    /* তোমার আগের স্টাইল রাখো */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       margin: 0; 
@@ -114,7 +117,7 @@
       display: block; 
       max-width: 100%; 
       border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0. amplio08); 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
     }
   </style>
 </head>
@@ -151,8 +154,8 @@
     const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
 
     const abi = [
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_encryptedData","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_cid","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"cid","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
     ];
 
     let provider = null;
@@ -163,13 +166,30 @@
 
     const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
+    const nftStorageClient = new NFTStorage({ token: process.env.NFT_STORAGE_KEY });
+
     function encryptData(data) {
-     :      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
+      return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
     }
 
     function decryptData(ciphertext) {
       const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
       return bytes.toString(CryptoJS.enc.Utf8);
+    }
+
+    async function uploadToIPFS(data) {
+      const encrypted = encryptData(data);
+      const blob = new Blob([encrypted], { type: 'text/plain' });
+      const cid = await nftStorageClient.storeBlob(blob);
+      return cid.toString();
+    }
+
+    async function fetchFromIPFS(cid) {
+      const url = `https://${cid}.ipfs.nftstorage.link`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("IPFS fetch failed");
+      const encrypted = await response.text();
+      return decryptData(encrypted);
     }
 
     function addMessage(text, isUser = false, isAI = false) {
@@ -280,42 +300,24 @@
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
-            records.forEach((rec, i) => {
-              const data = rec.encryptedData;
-              reply += `রেকর্ড ${i+1}: ${data} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
-              if (data.toLowerCase().includes("medicine") || data.toLowerCase().includes("ওষুধ") || data.toLowerCase().includes("paracetamol") || data.toLowerCase().includes("aspirin")) {
-                medicines.push(data);
+            for (const rec of records) {
+              const cid = rec.cid;
+              try {
+                const decrypted = await fetchFromIPFS(cid);
+                reply += `রেকর্ড: ${decrypted} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
+                if (decrypted.toLowerCase().includes("medicine") || decrypted.toLowerCase().includes("ওষুধ")) {
+                  medicines.push(decrypted);
+                }
+              } catch (err) {
+                reply += `রেকর্ড (CID: ${cid}): ডাটা লোড করতে সমস্যা\n`;
               }
-            });
+            }
             if (medicines.length > 0) {
               reply += "\nআপনার ওষুধের লিস্ট:\n" + medicines.join("\n");
             }
           }
           addMessage(reply);
           updateChart(records);
-
-          // AI পরামর্শ (Grok API)
-          if (records.length > 0) {
-            try {
-              const response = await fetch('/api', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  records: records.map(r => ({ encryptedData: r.encryptedData, timestamp: r.timestamp.toString() })),
-                  userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও।"
-                })
-              });
-
-              if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-              const data = await response.json();
-              if (data.advice) {
-                addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice, false, true);
-              }
-            } catch (err) {
-              addMessage("AI পরামর্শ পেতে সমস্যা: " + err.message);
-            }
-          }
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
@@ -348,15 +350,15 @@
           return;
         }
 
-        const encrypted = encryptData(data);
-
         try {
-          const tx = await contract.addRecord(userAddress, encrypted);
+          addMessage("ডাটা এনক্রিপ্ট + IPFS-এ আপলোড হচ্ছে...");
+          const cid = await uploadToIPFS(data);
+          const tx = await contract.addRecord(userAddress, cid);
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
           await tx.wait();
-          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
+          addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে (CID: " + cid + ")। 'রেকর্ড দেখাও' লিখে দেখুন।");
         } catch (error) {
-          addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
+          addMessage("অ্যাড করতে সমস্যা: " + error.message);
         }
       }
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
@@ -382,12 +384,8 @@
       const labels = records.map((_, i) => `রেকর্ড ${i+1}`);
       const timestamps = records.map(rec => Number(rec.timestamp));
       const colors = records.map(rec => {
-        const data = rec.encryptedData.toLowerCase();
-        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
-        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
-        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
-        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad";
-        return "#3498db";
+        // CID থেকে ডাটা ডিক্রিপ্ট না করে সিম্পল চেক (যদি CID হয়)
+        return "#3498db"; // ডিফল্ট
       });
 
       chartInstance = new Chart(ctx, {
@@ -406,7 +404,7 @@
           responsive: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'রেকর্ডের টাইমলাইন (রোগ/ওষুধ অনুসারে কালার)' }
+            title: { display: true, text: 'রেকর্ডের টাইমলাইন' }
           },
           scales: {
             y: { beginAtZero: true, title: { display: true, text: 'Timestamp' } }
