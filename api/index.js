@@ -28,7 +28,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192",  // এটা এখন কাজ করবে (ফ্রি + দারুণ)
+        model: "llama-3.1-8b-instant",  // এটা এখন কাজ করবে
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
