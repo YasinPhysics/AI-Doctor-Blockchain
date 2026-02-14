@@ -8,25 +8,114 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
-    /* তোমার আগের স্টাইল রাখো (অপরিবর্তিত) */
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); color: #333; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: linear-gradient(135deg, #e0f7fa, #b2ebf2); 
+      color: #333; 
+    }
     h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
-    #chat-container { max-width: 720px; margin: 0 auto 20px; background: white; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); overflow: hidden; }
-    #chat-header { background: linear-gradient(90deg, #009688, #00796b); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.3em; }
-    #chat-body { height: 420px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
-    .message { margin: 14px 0; padding: 14px 20px; border-radius: 20px; max-width: 82%; line-height: 1.5; word-wrap: break-word; }
-    .user { background: #009688; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
-    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; border-bottom-left-radius: 4px; }
-    .ai { background: #fff3e0; color: #ef6c00; margin-right: auto; border-left: 4px solid #ef6c00; }
-    #input-area { display: flex; padding: 16px; background: white; border-top: 1px solid #e0e0e0; }
-    #userInput { flex: 1; padding: 14px 18px; border: 1px solid #ccc; border-radius: 30px; outline: none; font-size: 1em; }
-    #sendBtn { margin-left: 12px; padding: 14px 28px; background: #009688; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; }
-    .auth-buttons { text-align: center; margin: 20px 0; }
-    #connectBtn, #logoutBtn { padding: 14px 32px; border: none; border-radius: 30px; cursor: pointer; font-size: 1.1em; margin: 0 12px; }
+    #chat-container { 
+      max-width: 720px; 
+      margin: 0 auto 20px; 
+      background: white; 
+      border-radius: 16px; 
+      box-shadow: 0 6px 25px rgba(0,0,0,0.12); 
+      overflow: hidden; 
+    }
+    #chat-header { 
+      background: linear-gradient(90deg, #009688, #00796b); 
+      color: white; 
+      padding: 18px; 
+      text-align: center; 
+      font-weight: bold; 
+      font-size: 1.3em; 
+    }
+    #chat-body { 
+      height: 420px; 
+      overflow-y: auto; 
+      padding: 20px; 
+      background: #f8f9fa; 
+    }
+    .message { 
+      margin: 14px 0; 
+      padding: 14px 20px; 
+      border-radius: 20px; 
+      max-width: 82%; 
+      line-height: 1.5; 
+      word-wrap: break-word; 
+    }
+    .user { 
+      background: #009688; 
+      color: white; 
+      margin-left: auto; 
+      border-bottom-right-radius: 4px; 
+    }
+    .bot { 
+      background: #e0f2f1; 
+      color: #004d40; 
+      margin-right: auto; 
+      border-bottom-left-radius: 4px; 
+    }
+    .ai { 
+      background: #fff3e0; 
+      color: #ef6c00; 
+      margin-right: auto; 
+      border-left: 4px solid #ef6c00; 
+    }
+    #input-area { 
+      display: flex; 
+      padding: 16px; 
+      background: white; 
+      border-top: 1px solid #e0e0e0; 
+    }
+    #userInput { 
+      flex: 1; 
+      padding: 14px 18px; 
+      border: 1px solid #ccc; 
+      border-radius: 30px; 
+      outline: none; 
+      font-size: 1em; 
+    }
+    #sendBtn { 
+      margin-left: 12px; 
+      padding: 14px 28px; 
+      background: #009688; 
+      color: white; 
+      border: none; 
+      border-radius: 30px; 
+      cursor: pointer; 
+      font-weight: bold; 
+    }
+    .auth-buttons { 
+      text-align: center; 
+      margin: 20px 0; 
+    }
+    #connectBtn, #logoutBtn { 
+      padding: 14px 32px; 
+      border: none; 
+      border-radius: 30px; 
+      cursor: pointer; 
+      font-size: 1.1em; 
+      margin: 0 12px; 
+    }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
-    #status { text-align: center; margin: 15px; color: #444; font-size: 1.05em; font-weight: 500; }
-    canvas { margin: 25px auto; display: block; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    #status { 
+      text-align: center; 
+      margin: 15px; 
+      color: #444; 
+      font-size: 1.05em; 
+      font-weight: 500; 
+    }
+    canvas { 
+      margin: 25px auto; 
+      display: block; 
+      max-width: 100%; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+    }
   </style>
 </head>
 <body>
@@ -79,24 +168,6 @@
           {"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}
         ],
         "name":"updateProfile",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"address","name":"_doctor","type":"address"}
-        ],
-        "name":"addAllowedDoctor",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
-      },
-      {
-        "inputs": [
-          {"internalType":"address","name":"_doctor","type":"address"}
-        ],
-        "name":"removeAllowedDoctor",
         "outputs":[],
         "stateMutability":"nonpayable",
         "type":"function"
@@ -175,6 +246,14 @@
     let userAddress = null;
     let chartInstance = null;
 
+    // Profile setup state
+    let profileSetupStep = -1;
+    let profileData = {};
+
+    // Record setup state
+    let recordSetupStep = -1;
+    let recordData = {};
+
     function addMessage(text, isUser = false, isAI = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -212,7 +291,7 @@
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
         addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
 • রেকর্ড দেখাও / আমার হিস্ট্রি  
-• অ্যাড করো: [রোগ] [রিডিং] [ওষুধের নাম] [ডোজ] [ফ্রিকোয়েন্সি] [দিন]`);
+• অ্যাড করো`);
 
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
@@ -257,14 +336,7 @@
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
-    // Profile setup state
-    let profileSetupStep = -1;
-    let profileData = {};
-
-    // Record setup state
-    let recordSetupStep = -1;
-    let recordData = {};
-
+    // Profile setup questions
     function askForProfile() {
       const steps = [
         "আপনার জন্ম তারিখ লিখুন (DD-MM-YYYY)",
@@ -279,6 +351,7 @@
       addMessage(steps[profileSetupStep]);
     }
 
+    // Record setup questions
     function askForRecord() {
       const steps = [
         "রোগের নাম লিখুন (যেমন Diabetes)",
