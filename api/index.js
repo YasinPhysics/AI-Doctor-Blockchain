@@ -10,16 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = `
-আমি একজন AI ডাক্তার সহায়ক। নিচের পেশেন্টের রেকর্ড দেখে সহজ, বাস্তবসম্মত এবং সতর্কতামূলক পরামর্শ দাও।
-পরামর্শে সবসময় বলো: "এটা শুধু সাধারণ পরামর্শ। অবশ্যই ডাক্তারের সাথে কথা বলুন।"
-
-রেকর্ড:
-${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).toLocaleString()})`).join('\n')}
-
-ইউজারের প্রশ্ন/মেসেজ: ${userMessage}
-
-উত্তর বাংলায় দাও, সহজ ভাষায়, ৪-৬ লাইনের মধ্যে।`;
+    const prompt = `...` // আগের প্রম্পট
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -28,7 +19,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",  // ফ্রি ক্রেডিটে এটা সবচেয়ে ভালো কাজ করে
+        model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
