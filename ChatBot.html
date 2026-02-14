@@ -122,13 +122,19 @@
         document.getElementById("userInput").disabled = false;
 
         // প্রোফাইল চেক (এরর ধরে বাইপাস)
+        let fixedProfile = null;
         try {
-          const fixedProfile = await contract.getFixedProfile(userAddress);
-          if (fixedProfile.dateOfBirth === 0n) throw new Error("Fixed profile not set");
+          fixedProfile = await contract.getFixedProfile(userAddress);
         } catch (err) {
+          // এরর এলেও প্রশ্ন শুরু করবে
+        }
+
+        if (!fixedProfile || fixedProfile.dateOfBirth === 0n) {
           addMessage("আপনার প্রোফাইল সেট করা হয়নি। আসুন প্রথমে আপনার তথ্য দিন।");
           profileSetupStep = 0;
           askForProfile();
+        } else {
+          addMessage("আপনার প্রোফাইল ইতিমধ্যে সেট আছে। এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
         }
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
@@ -261,7 +267,7 @@
             addMessage("প্রোফাইল সেট হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
 
-            // এখন আপডেটযোগ্য প্রোফাইল সেট করো
+            // আপডেটযোগ্য প্রোফাইল সেট করো
             const tx2 = await contract.updateProfile(
               profileData.weightKg,
               profileData.heightCm,
@@ -271,7 +277,7 @@
             addMessage("প্রোফাইল আপডেট হচ্ছে... Tx: " + tx2.hash);
             await tx2.wait();
 
-            addMessage("প্রোফাইল সেট হয়েছে! এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
+            addMessage("প্রোফাইল সম্পূর্ণ সেট হয়েছে! এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
             profileSetupStep = -1;
           } catch (err) {
             addMessage("প্রোফাইল সেট করতে সমস্যা: " + err.message);
