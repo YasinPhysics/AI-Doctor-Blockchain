@@ -8,114 +8,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      margin: 0; 
-      padding: 20px; 
-      background: linear-gradient(135deg, #e0f7fa, #b2ebf2); 
-      color: #333; 
-    }
+    /* তোমার আগের স্টাইল রাখো (অপরিবর্তিত) */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); color: #333; }
     h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
-    #chat-container { 
-      max-width: 720px; 
-      margin: 0 auto 20px; 
-      background: white; 
-      border-radius: 16px; 
-      box-shadow: 0 6px 25px rgba(0,0,0,0.12); 
-      overflow: hidden; 
-    }
-    #chat-header { 
-      background: linear-gradient(90deg, #009688, #00796b); 
-      color: white; 
-      padding: 18px; 
-      text-align: center; 
-      font-weight: bold; 
-      font-size: 1.3em; 
-    }
-    #chat-body { 
-      height: 420px; 
-      overflow-y: auto; 
-      padding: 20px; 
-      background: #f8f9fa; 
-    }
-    .message { 
-      margin: 14px 0; 
-      padding: 14px 20px; 
-      border-radius: 20px; 
-      max-width: 82%; 
-      line-height: 1.5; 
-      word-wrap: break-word; 
-    }
-    .user { 
-      background: #009688; 
-      color: white; 
-      margin-left: auto; 
-      border-bottom-right-radius: 4px; 
-    }
-    .bot { 
-      background: #e0f2f1; 
-      color: #004d40; 
-      margin-right: auto; 
-      border-bottom-left-radius: 4px; 
-    }
-    .ai { 
-      background: #fff3e0; 
-      color: #ef6c00; 
-      margin-right: auto; 
-      border-left: 4px solid #ef6c00; 
-    }
-    #input-area { 
-      display: flex; 
-      padding: 16px; 
-      background: white; 
-      border-top: 1px solid #e0e0e0; 
-    }
-    #userInput { 
-      flex: 1; 
-      padding: 14px 18px; 
-      border: 1px solid #ccc; 
-      border-radius: 30px; 
-      outline: none; 
-      font-size: 1em; 
-    }
-    #sendBtn { 
-      margin-left: 12px; 
-      padding: 14px 28px; 
-      background: #009688; 
-      color: white; 
-      border: none; 
-      border-radius: 30px; 
-      cursor: pointer; 
-      font-weight: bold; 
-    }
-    .auth-buttons { 
-      text-align: center; 
-      margin: 20px 0; 
-    }
-    #connectBtn, #logoutBtn { 
-      padding: 14px 32px; 
-      border: none; 
-      border-radius: 30px; 
-      cursor: pointer; 
-      font-size: 1.1em; 
-      margin: 0 12px; 
-    }
+    #chat-container { max-width: 720px; margin: 0 auto 20px; background: white; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); overflow: hidden; }
+    #chat-header { background: linear-gradient(90deg, #009688, #00796b); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.3em; }
+    #chat-body { height: 420px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
+    .message { margin: 14px 0; padding: 14px 20px; border-radius: 20px; max-width: 82%; line-height: 1.5; word-wrap: break-word; }
+    .user { background: #009688; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; border-bottom-left-radius: 4px; }
+    .ai { background: #fff3e0; color: #ef6c00; margin-right: auto; border-left: 4px solid #ef6c00; }
+    #input-area { display: flex; padding: 16px; background: white; border-top: 1px solid #e0e0e0; }
+    #userInput { flex: 1; padding: 14px 18px; border: 1px solid #ccc; border-radius: 30px; outline: none; font-size: 1em; }
+    #sendBtn { margin-left: 12px; padding: 14px 28px; background: #009688; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; }
+    .auth-buttons { text-align: center; margin: 20px 0; }
+    #connectBtn, #logoutBtn { padding: 14px 32px; border: none; border-radius: 30px; cursor: pointer; font-size: 1.1em; margin: 0 12px; }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
-    #status { 
-      text-align: center; 
-      margin: 15px; 
-      color: #444; 
-      font-size: 1.05em; 
-      font-weight: 500; 
-    }
-    canvas { 
-      margin: 25px auto; 
-      display: block; 
-      max-width: 100%; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
-    }
+    #status { text-align: center; margin: 15px; color: #444; font-size: 1.05em; font-weight: 500; }
+    canvas { margin: 25px auto; display: block; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
   </style>
 </head>
 <body>
@@ -149,8 +60,113 @@
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
 
     const abi = [
-      // ABI here (same as previous message)
-      // ... (paste the full ABI from earlier response)
+      {
+        "inputs": [
+          {"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},
+          {"internalType":"string","name":"_gender","type":"string"},
+          {"internalType":"string","name":"_bloodGroup","type":"string"}
+        ],
+        "name":"setFixedProfile",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"uint256","name":"_weightKg","type":"uint256"},
+          {"internalType":"uint256","name":"_heightCm","type":"uint256"},
+          {"internalType":"string[]","name":"_allergies","type":"string[]"},
+          {"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}
+        ],
+        "name":"updateProfile",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"addAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"removeAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"string","name":"_diseaseName","type":"string"},
+          {"internalType":"string","name":"_readingValue","type":"string"},
+          {"components":[
+            {"internalType":"string","name":"name","type":"string"},
+            {"internalType":"string","name":"dose","type":"string"},
+            {"internalType":"string","name":"frequency","type":"string"},
+            {"internalType":"uint256","name":"durationDays","type":"uint256"}
+          ],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},
+          {"internalType":"string","name":"_ipfsCid","type":"string"},
+          {"internalType":"string","name":"_diseaseDetails","type":"string"}
+        ],
+        "name":"addDailyRecord",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getAllDiseaseRecords",
+        "outputs":[{"components":[
+          {"internalType":"string","name":"diseaseName","type":"string"},
+          {"components":[
+            {"internalType":"uint256","name":"timestamp","type":"uint256"},
+            {"internalType":"string","name":"readingValue","type":"string"},
+            {"components":[
+              {"internalType":"string","name":"name","type":"string"},
+              {"internalType":"string","name":"dose","type":"string"},
+              {"internalType":"string","name":"frequency","type":"string"},
+              {"internalType":"uint256","name":"durationDays","type":"uint256"}
+            ],"internalType":"struct LifeHealthChain.Medicine[]","name":"medicines","type":"tuple[]"},
+            {"internalType":"string","name":"ipfsCid","type":"string"},
+            {"internalType":"address","name":"addedBy","type":"address"},
+            {"internalType":"uint256","name":"patientAgeAtRecord","type":"uint256"},
+            {"internalType":"uint256","name":"patientWeightKg","type":"uint256"},
+            {"internalType":"uint256","name":"patientHeightCm","type":"uint256"}
+          ],"internalType":"struct LifeHealthChain.DailyRecord[]","name":"dailyRecords","type":"tuple[]"}
+        ],"internalType":"struct LifeHealthChain.DiseaseRecord[]","name":"","type":"tuple[]"}],
+        "stateMutability":"view",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getPatientProfile",
+        "outputs":[{"components":[
+          {"internalType":"uint256","name":"weightKg","type":"uint256"},
+          {"internalType":"uint256","name":"heightCm","type":"uint256"},
+          {"internalType":"string[]","name":"allergies","type":"string[]"},
+          {"internalType":"string[]","name":"chronicDiseases","type":"string[]"},
+          {"internalType":"address[]","name":"allowedDoctors","type":"address[]"}
+        ],"internalType":"struct LifeHealthChain.PatientProfile","name":"","type":"tuple"}],
+        "stateMutability":"view",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"patient","type":"address"}],
+        "name":"getFixedProfile",
+        "outputs":[
+          {"internalType":"uint256","name":"dateOfBirth","type":"uint256"},
+          {"internalType":"string","name":"gender","type":"string"},
+          {"internalType":"string","name":"bloodGroup","type":"string"}
+        ],
+        "stateMutability":"view",
+        "type":"function"
+      }
     ];
 
     let provider = null;
@@ -158,14 +174,6 @@
     let contract = null;
     let userAddress = null;
     let chartInstance = null;
-
-    // Profile setup state
-    let profileSetupStep = -1;
-    let profileData = {};
-
-    // Record setup state
-    let recordSetupStep = -1;
-    let recordData = {};
 
     function addMessage(text, isUser = false, isAI = false) {
       const chatBody = document.getElementById("chat-body");
@@ -211,9 +219,9 @@
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
-        // Check if profile is set
-        const profile = await contract.getPatientProfile(userAddress);
-        if (profile.dateOfBirth === 0n) {
+        // Check if fixed profile is set
+        const fixedProfile = await contract.getFixedProfile(userAddress);
+        if (fixedProfile.dateOfBirth === 0n) {
           addMessage("আপনার প্রোফাইল সেট করা হয়নি। আসুন প্রথমে আপনার তথ্য দিন।");
           profileSetupStep = 0;
           askForProfile();
@@ -249,22 +257,28 @@
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
-    // Profile setup questions
+    // Profile setup state
+    let profileSetupStep = -1;
+    let profileData = {};
+
+    // Record setup state
+    let recordSetupStep = -1;
+    let recordData = {};
+
     function askForProfile() {
       const steps = [
-        "আপনার জন্ম তারিখ লিখুন (ফরম্যাট: DD-MM-YYYY)",
+        "আপনার জন্ম তারিখ লিখুন (DD-MM-YYYY)",
         "আপনার লিঙ্গ লিখুন (Male/Female/Other)",
         "আপনার ব্লাড গ্রুপ লিখুন (যেমন A+, O-)",
         "আপনার ওজন লিখুন (kg)",
         "আপনার উচ্চতা লিখুন (cm)",
-        "আপনার কোনো অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)",
-        "আপনার কোনো দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)"
+        "আপনার অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা, না থাকলে skip)",
+        "আপনার দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা, না থাকলে skip)"
       ];
 
       addMessage(steps[profileSetupStep]);
     }
 
-    // Record setup questions
     function askForRecord() {
       const steps = [
         "রোগের নাম লিখুন (যেমন Diabetes)",
@@ -272,9 +286,9 @@
         "ওষুধের নাম লিখুন (যেমন Metformin)",
         "ডোজ লিখুন (যেমন 500mg)",
         "ফ্রিকোয়েন্সি লিখুন (যেমন 3 times/day)",
-        "কতদিন খাবেন লিখুন (দিনের সংখ্যা)",
-        "রোগের বিস্তারিত তথ্য/নোট লিখুন (অপশনাল, না থাকলে skip লিখুন)",
-        "কোনো রিপোর্ট ফাইলের IPFS CID থাকলে দিন (অপশনাল, না থাকলে skip লিখুন)"
+        "কতদিন খাবেন লিখুন (দিন)",
+        "রোগের বিস্তারিত তথ্য/নোট লিখুন (অপশনাল, না থাকলে skip)",
+        "IPFS CID থাকলে দিন (অপশনাল, না থাকলে skip)"
       ];
 
       addMessage(steps[recordSetupStep]);
@@ -298,7 +312,7 @@
       // Profile setup mode
       if (profileSetupStep >= 0) {
         if (lower === "skip" || lower === "নাই" || lower === "") {
-          if (profileSetupStep === 5 || profileSetupStep === 6) {
+          if (profileSetupStep >= 5) {
             profileData.allergies = profileSetupStep === 5 ? [] : profileData.allergies || [];
             profileData.chronicDiseases = profileSetupStep === 6 ? [] : profileData.chronicDiseases || [];
             profileSetupStep = 7;
@@ -309,7 +323,6 @@
         } else {
           switch (profileSetupStep) {
             case 0:
-              // Date of Birth (DD-MM-YYYY to Unix timestamp)
               const [day, month, year] = text.split("-");
               if (!day || !month || !year) {
                 addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
@@ -364,7 +377,7 @@
       // Record setup mode
       if (recordSetupStep >= 0) {
         if (lower === "skip" || lower === "নাই" || lower === "") {
-          if (recordSetupStep === 6 || recordSetupStep === 7) {
+          if (recordSetupStep >= 6) {
             recordData.diseaseDetails = recordSetupStep === 6 ? "" : recordData.diseaseDetails || "";
             recordData.ipfsCid = recordSetupStep === 7 ? "" : recordData.ipfsCid || "";
             recordSetupStep = 8;
