@@ -200,8 +200,7 @@
             {"internalType":"string","name":"frequency","type":"string"},
             {"internalType":"uint256","name":"durationDays","type":"uint256"}
           ],"internalType":"struct LifeHealthChain.Medicine[]","name":"_medicines","type":"tuple[]"},
-          {"internalType":"string","name":"_ipfsCid","type":"string"},
-          {"internalType":"string","name":"_diseaseDetails","type":"string"}
+          {"internalType":"string","name":"_ipfsCid","type":"string"}
         ],
         "name":"addDailyRecord",
         "outputs":[],
@@ -274,13 +273,6 @@
 
       try {
         provider = new ethers.BrowserProvider(window.ethereum);
-        // Arc Testnet-এ ENS নেই, তাই disable
-        provider = provider.withNetworkOverride({
-          chainId: 5042002,
-          name: "Arc Testnet",
-          ensAddress: null
-        });
-
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
@@ -426,7 +418,6 @@
         lower.includes("সেভ করো") ||
         lower.includes("রেকর্ড করো")
       ) {
-        // উদাহরণ: অ্যাড করো: Diabetes 180 mg/dL Metformin 500mg 3 times/day 15
         let data = text;
 
         const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
