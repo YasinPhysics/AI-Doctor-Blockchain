@@ -200,6 +200,7 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
+    // ওয়ালেট কানেক্ট ফাংশন
     async function connectWallet() {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
@@ -262,6 +263,7 @@
       }
     }
 
+    // বাটনগুলোর event listener
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
