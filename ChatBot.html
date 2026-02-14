@@ -3,33 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Doctor - Patient Records Chatbot</title>
+  <title>AI Doctor - LifeHealth Chain</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); color: #333; }
-    h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
-    #chat-container { max-width: 720px; margin: 0 auto 20px; background: white; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); overflow: hidden; }
-    #chat-header { background: linear-gradient(90deg, #009688, #00796b); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.3em; }
-    #chat-body { height: 420px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
-    .message { margin: 14px 0; padding: 14px 20px; border-radius: 20px; max-width: 82%; line-height: 1.5; word-wrap: break-word; }
-    .user { background: #009688; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
-    .bot { background: #e0f2f1; color: #004d40; margin-right: auto; border-bottom-left-radius: 4px; }
-    .ai { background: #fff3e0; color: #ef6c00; margin-right: auto; border-left: 4px solid #ef6c00; }
-    #input-area { display: flex; padding: 16px; background: white; border-top: 1px solid #e0e0e0; }
-    #userInput { flex: 1; padding: 14px 18px; border: 1px solid #ccc; border-radius: 30px; outline: none; font-size: 1em; }
-    #sendBtn { margin-left: 12px; padding: 14px 28px; background: #009688; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; }
-    .auth-buttons { text-align: center; margin: 20px 0; }
-    #connectBtn, #logoutBtn { padding: 14px 32px; border: none; border-radius: 30px; cursor: pointer; font-size: 1.1em; margin: 0 12px; }
+    :root {
+      --primary: #009688;
+      --primary-dark: #00796b;
+      --light: #e0f2f1;
+      --bg: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: #333;
+      min-height: 100vh;
+    }
+    h1 { text-align: center; color: var(--primary-dark); margin-bottom: 8px; }
+    #chat-container {
+      max-width: 720px;
+      margin: 0 auto 20px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    #chat-header {
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 18px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.3em;
+    }
+    #chat-body {
+      height: 420px;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    .message {
+      margin: 14px 0;
+      padding: 14px 20px;
+      border-radius: 20px;
+      max-width: 82%;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    .user {
+      background: var(--primary);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+    .bot {
+      background: var(--light);
+      color: #004d40;
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+    #input-area {
+      display: flex;
+      padding: 16px;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+    }
+    #userInput {
+      flex: 1;
+      padding: 14px 18px;
+      border: 1px solid #ccc;
+      border-radius: 30px;
+      outline: none;
+      font-size: 1em;
+    }
+    #sendBtn {
+      margin-left: 12px;
+      padding: 14px 28px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .auth-buttons {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #connectBtn, #logoutBtn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1.1em;
+      margin: 0 12px;
+    }
     #connectBtn { background: #ff5722; color: white; }
     #logoutBtn { background: #e74c3c; color: white; display: none; }
-    #status { text-align: center; margin: 15px; color: #444; font-size: 1.05em; font-weight: 500; }
-    canvas { margin: 25px auto; display: block; max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    #status {
+      text-align: center;
+      margin: 15px;
+      color: #444;
+      font-size: 1.05em;
+      font-weight: 500;
+    }
+    canvas {
+      margin: 25px auto;
+      display: block;
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
   </style>
 </head>
 <body>
-  <h1>AI Doctor - Patient Records Chatbot</h1>
+  <h1>AI Doctor - LifeHealth Chain</h1>
 
   <div id="chat-container">
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
@@ -104,17 +194,16 @@
       }
 
       try {
-        provider = new ethers.BrowserProvider(window.ethereum);
+        // Arc Testnet-এর জন্য custom provider (ENS disable)
+        provider = new ethers.BrowserProvider(window.ethereum, {
+          chainId: 5042002,
+          name: "Arc Testnet",
+          ensAddress: null
+        });
+
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
-
-        const network = await provider.getNetwork();
-        if (Number(network.chainId) !== 5042002) {
-          status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
-          addMessage("Arc Testnet-এ সুইচ করুন!");
-          return;
-        }
 
         contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -132,18 +221,18 @@
         let fixedProfile = null;
         try {
           fixedProfile = await contract.getFixedProfile(userAddress);
-          console.log("getFixedProfile সফল হয়েছে:", fixedProfile);
+          console.log("getFixedProfile সফল:", fixedProfile);
           if (fixedProfile.dateOfBirth !== 0n) {
             addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট আছে।");
             fixedProfileSetupStep = -1;
 
             // Updatable profile চেক
-            let profile = null;
             try {
-              profile = await contract.getPatientProfile(userAddress);
-              console.log("getPatientProfile সফল হয়েছে:", profile);
+              const profile = await contract.getPatientProfile(userAddress);
+              console.log("getPatientProfile সফল:", profile);
               if (profile.weightKg > 0n && profile.heightCm > 0n) {
                 addMessage("প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
+                updatableProfileSetupStep = -1;
               } else {
                 addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
                 updatableProfileSetupStep = 0;
@@ -167,6 +256,7 @@
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
         addMessage("কানেক্ট করতে সমস্যা: " + error.message);
+        console.log("Connect error:", error);
       }
     }
 
@@ -377,28 +467,28 @@
         } else {
           switch (recordSetupStep) {
             case 0:
-              recordData.diseaseName = text;
+              recordData.diseaseName = text.trim();
               break;
             case 1:
-              recordData.readingValue = text;
+              recordData.readingValue = text.trim();
               break;
             case 2:
-              recordData.medicineName = text;
+              recordData.medicineName = text.trim();
               break;
             case 3:
-              recordData.dose = text;
+              recordData.dose = text.trim();
               break;
             case 4:
-              recordData.frequency = text;
+              recordData.frequency = text.trim();
               break;
             case 5:
               recordData.durationDays = parseInt(text) || 0;
               break;
             case 6:
-              recordData.diseaseDetails = text;
+              recordData.diseaseDetails = text.trim();
               break;
             case 7:
-              recordData.ipfsCid = text;
+              recordData.ipfsCid = text.trim();
               break;
           }
         }
@@ -410,19 +500,20 @@
             if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
               medicines.push({
                 name: recordData.medicineName.trim(),
-                dose: recordData.dose ? recordData.dose.trim() : "N/A",
-                frequency: recordData.frequency ? recordData.frequency.trim() : "N/A",
+                dose: recordData.dose && recordData.dose.trim() !== "" && recordData.dose.toLowerCase() !== "skip" ? recordData.dose.trim() : "N/A",
+                frequency: recordData.frequency && recordData.frequency.trim() !== "" && recordData.frequency.toLowerCase() !== "skip" ? recordData.frequency.trim() : "N/A",
                 durationDays: recordData.durationDays || 0
               });
             }
 
-            console.log("addDailyRecord প্যারামিটার:", {
-              diseaseName: recordData.diseaseName || "N/A",
-              readingValue: recordData.readingValue || "N/A",
-              medicines,
-              ipfsCid: recordData.ipfsCid || "",
-              diseaseDetails: recordData.diseaseDetails || ""
-            });
+            console.log("=== addDailyRecord DEBUG ===");
+            console.log("diseaseName:", recordData.diseaseName || "N/A");
+            console.log("readingValue:", recordData.readingValue || "N/A");
+            console.log("medicines:", medicines);
+            console.log("medicines count:", medicines.length);
+            console.log("ipfsCid:", recordData.ipfsCid || "N/A");
+            console.log("diseaseDetails:", recordData.diseaseDetails || "N/A");
+            console.log("==============================");
 
             const tx = await contract.addDailyRecord(
               recordData.diseaseName || "",
@@ -431,12 +522,13 @@
               recordData.ipfsCid || "",
               recordData.diseaseDetails || ""
             );
+
             addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
             addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
             recordSetupStep = -1;
           } catch (err) {
-            console.log("addDailyRecord এরর:", err);
+            console.log("addDailyRecord ERROR:", err);
             addMessage("রেকর্ড অ্যাড করতে সমস্যা: " + (err.reason || err.message || "Unknown error"));
             recordSetupStep = -1;
           }
@@ -480,7 +572,7 @@
           addMessage(reply);
           updateChart(records);
         } catch (error) {
-          console.log("getAllDiseaseRecords এরর:", error.message);
+          console.log("getAllDiseaseRecords এরর:", error);
           addMessage("আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।");
         }
       }
