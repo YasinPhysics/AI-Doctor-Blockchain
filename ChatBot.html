@@ -174,6 +174,24 @@
       },
       {
         "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"addAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
+          {"internalType":"address","name":"_doctor","type":"address"}
+        ],
+        "name":"removeAllowedDoctor",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs": [
           {"internalType":"string","name":"_diseaseName","type":"string"},
           {"internalType":"string","name":"_readingValue","type":"string"},
           {"components":[
@@ -298,12 +316,20 @@
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
-        // Check if fixed profile is set
-        const fixedProfile = await contract.getFixedProfile(userAddress);
-        if (fixedProfile.dateOfBirth === 0n) {
-          addMessage("আপনার প্রোফাইল সেট করা হয়নি। আসুন প্রথমে আপনার তথ্য দিন।");
-          profileSetupStep = 0;
-          askForProfile();
+        // প্রোফাইল চেক করার সময় try-catch দিয়ে এরর ধরা
+        try {
+          const fixedProfile = await contract.getFixedProfile(userAddress);
+          if (fixedProfile.dateOfBirth === 0n) {
+            throw new Error("Fixed profile not set");
+          }
+        } catch (err) {
+          if (err.message.includes("Fixed profile not set") || err.code === "CALL_EXCEPTION") {
+            addMessage("আপনার প্রোফাইল সেট করা হয়নি। আসুন প্রথমে আপনার তথ্য দিন।");
+            profileSetupStep = 0;
+            askForProfile();
+          } else {
+            addMessage("প্রোফাইল চেক করতে সমস্যা: " + err.message);
+          }
         }
       } catch (error) {
         status.innerText = "কানেক্ট করতে সমস্যা: " + error.message;
