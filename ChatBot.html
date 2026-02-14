@@ -7,7 +7,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-  <script src="https://unpkg.com/nft.storage/dist/bundle.min.js"></script>
   <style>
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -152,8 +151,8 @@
     const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
 
     const abi = [
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_cid","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
-      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"cid","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_encryptedData","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
     ];
 
     let provider = null;
@@ -164,9 +163,6 @@
 
     const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
-    // nft.storage client (Vercel-এ NFT_STORAGE_KEY সেট করতে হবে)
-    const nftStorageClient = new NFTStorage({ token: process.env.NFT_STORAGE_KEY });
-
     function encryptData(data) {
       return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
     }
@@ -174,21 +170,6 @@
     function decryptData(ciphertext) {
       const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
       return bytes.toString(CryptoJS.enc.Utf8);
-    }
-
-    async function uploadToIPFS(data) {
-      const encrypted = encryptData(data);
-      const blob = new Blob([encrypted], { type: 'text/plain' });
-      const cid = await nftStorageClient.storeBlob(blob);
-      return cid.toString();
-    }
-
-    async function fetchFromIPFS(cid) {
-      const url = `https://${cid}.ipfs.nftstorage.link`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("IPFS fetch failed");
-      const encrypted = await response.text();
-      return decryptData(encrypted);
     }
 
     function addMessage(text, isUser = false, isAI = false) {
@@ -233,6 +214,7 @@
 • আমার ওষুধ কী কী?  
 • নতুন ডাটা যোগ করো`);
 
+        // বাটনগুলো enable করো
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
@@ -264,10 +246,10 @@
     }
 
     // বাটনগুলোর event listener
-    document.getElementById("connectBtn").onclick = connectWallet;
-    document.getElementById("logoutBtn").onclick = disconnectWallet;
+    document.getElementById("connectBtn").addEventListener('click', connectWallet);
+    document.getElementById("logoutBtn").addEventListener('click', disconnectWallet);
 
-    document.getElementById("sendBtn").onclick = async () => {
+    document.getElementById("sendBtn").addEventListener('click', async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
       if (!text) return;
