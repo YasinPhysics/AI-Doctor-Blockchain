@@ -9,6 +9,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing records or message' });
   }
 
+  if (!process.env.GROQ_API_KEY) {
+    console.error("GROQ_API_KEY is not set");
+    return res.status(500).json({ error: 'Server configuration error: Missing API key' });
+  }
+
   try {
     const prompt = `
 আমি একজন AI ডাক্তার সহায়ক। নিচের পেশেন্টের রেকর্ড দেখে সহজ, বাস্তবসম্মত এবং সতর্কতামূলক পরামর্শ দাও।
@@ -28,7 +33,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192",  // ফ্রি + দ্রুত মডেল
+        model: "llama3-8b-8192",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300
@@ -37,6 +42,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
     if (!response.ok) {
       const errText = await response.text();
+      console.error("Groq API response error:", errText);
       throw new Error(`Groq API error: ${response.status} - ${errText}`);
     }
 
@@ -45,7 +51,7 @@ ${records.map(r => `- ${r.encryptedData} (${new Date(Number(r.timestamp)*1000).t
 
     res.status(200).json({ advice });
   } catch (error) {
-    console.error("Groq API error:", error);
+    console.error("Groq API error:", error.message);
     res.status(500).json({ error: 'AI request failed: ' + error.message });
   }
 }
