@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="bn">
-<head> 
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Doctor - Patient Records Chatbot</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- CryptoJS for encryption (optional, পরে IPFS-এর সাথে ব্যবহার করা যাবে) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <style>
     body { 
@@ -58,6 +57,12 @@
       color: #004d40; 
       margin-right: auto; 
       border-bottom-left-radius: 4px; 
+    }
+    .ai { 
+      background: #fff3e0; 
+      color: #ef6c00; 
+      margin-right: auto; 
+      border-left: 4px solid #ef6c00; 
     }
     #input-area { 
       display: flex; 
@@ -128,7 +133,7 @@
 • নতুন ডাটা যোগ করো</div>
     </div>
     <div id="input-area">
-      <input type="text" id="userInput" placeholder="আপনার মেসেজ লিখুন..." />
+      <input type="text" id="userInput" placeholder="জিজ্ঞাসা করুন..." />
       <button id="sendBtn">পাঠান</button>
     </div>
   </div>
@@ -156,8 +161,8 @@
     let userAddress = null;
     let chartInstance = null;
 
-    // CryptoJS এনক্রিপশন কী (টেস্টের জন্য ফিক্সড, পরে ইউজার-স্পেসিফিক করা যাবে)
-    const ENCRYPTION_KEY = "YourSecretKey123!@#"; // পরে পরিবর্তন করো
+    // সিম্পল এনক্রিপশন কী (টেস্টের জন্য)
+    const ENCRYPTION_KEY = "LifeHealthSecretKey2026";
 
     function encryptData(data) {
       return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
@@ -168,10 +173,10 @@
       return bytes.toString(CryptoJS.enc.Utf8);
     }
 
-    function addMessage(text, isUser = false) {
+    function addMessage(text, isUser = false, isAI = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
-      msgDiv.className = "message " + (isUser ? "user" : "bot");
+      msgDiv.className = "message " + (isUser ? "user" : isAI ? "ai" : "bot");
       msgDiv.innerText = text;
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
@@ -255,6 +260,7 @@
 
       const lower = text.toLowerCase();
 
+      // রেকর্ড দেখার কমান্ড
       if (
         lower.includes("দেখাও") ||
         lower.includes("রেকর্ড") ||
@@ -290,39 +296,34 @@
           addMessage(reply);
           updateChart(records);
 
-          // Grok AI-এর কাছে পরামর্শ চাওয়া
+          // AI পরামর্শ (Grok API)
           if (records.length > 0) {
             try {
               const response = await fetch('/api', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                  records: records.map(r => ({ 
-                    encryptedData: r.encryptedData, 
-                    timestamp: r.timestamp.toString() 
-                  })),
-                  userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য জানা না থাকলে সাধারণ পরামর্শ দিও।"
+                  records: records.map(r => ({ encryptedData: r.encryptedData, timestamp: r.timestamp.toString() })),
+                  userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও।"
                 })
               });
 
-              if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-              }
+              if (!response.ok) throw new Error(`API error: ${response.status}`);
 
               const data = await response.json();
               if (data.advice) {
-                addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice);
-              } else {
-                addMessage("AI থেকে পরামর্শ পাওয়া যায়নি।");
+                addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice, false, true);
               }
             } catch (err) {
-              addMessage("AI কানেকশন সমস্যা: " + err.message);
+              addMessage("AI পরামর্শ পেতে সমস্যা: " + err.message);
             }
           }
         } catch (error) {
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
+
+      // রেকর্ড অ্যাড করা
       else if (
         lower.includes("অ্যাড") ||
         lower.includes("add") ||
@@ -351,7 +352,6 @@
           return;
         }
 
-        // সিম্পল এনক্রিপশন (পরে IPFS যোগ করা যাবে)
         const encrypted = encryptData(data);
 
         try {
@@ -363,9 +363,13 @@
           addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
+
+      // গ্রিটিং
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
       }
+
+      // ডিফল্ট
       else {
         addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি / ওষুধ কী কী\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
@@ -387,11 +391,11 @@
       const timestamps = records.map(rec => Number(rec.timestamp));
       const colors = records.map(rec => {
         const data = rec.encryptedData.toLowerCase();
-        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c"; // লাল
-        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12"; // কমলা
-        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60"; // সবুজ
-        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad"; // বেগুনি
-        return "#3498db"; // ডিফল্ট নীল
+        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
+        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
+        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
+        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad";
+        return "#3498db";
       });
 
       chartInstance = new Chart(ctx, {
