@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI ডাক্তার - রোগীর রেকর্ড চ্যাটবট</title>
 
+  <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -22,7 +23,7 @@
     body {
       margin: 0;
       padding: 20px;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg-gradient);
       color: var(--text-light);
       min-height: 100vh;
@@ -246,6 +247,7 @@
       msgDiv.innerHTML = text;
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
+      document.getElementById("userInput").focus(); // প্রশ্নের পর ইনপুটে ফোকাস
     }
 
     function updateStatus(text) {
@@ -340,6 +342,7 @@
         "আপনার ব্লাড গ্রুপ লিখুন (যেমন: A+, O-, B- ইত্যাদি)"
       ];
       addMessage(questions[fixedProfileStep]);
+      document.getElementById("userInput").focus();
     }
 
     function askUpdatableProfile() {
@@ -350,6 +353,7 @@
         "দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)"
       ];
       addMessage(questions[updatableProfileStep]);
+      document.getElementById("userInput").focus();
     }
 
     function askRecord() {
@@ -364,9 +368,9 @@
         "IPFS CID (যদি কোনো রিপোর্ট আপলোড করেন, অপশনাল)"
       ];
       addMessage(questions[recordStep]);
+      document.getElementById("userInput").focus();
     }
 
-    // AI পরামর্শ ফাংশন
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
@@ -418,9 +422,6 @@
       }
     }
 
-    // ========================================
-    //          মূল ইনপুট হ্যান্ডলার
-    // ========================================
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
@@ -436,9 +437,9 @@
 
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল
+      // ফিক্সড প্রোফাইল (ধাপে ধাপে প্রশ্ন + tx সাবমিট)
       if (fixedProfileStep >= 0) {
-        if (["skip","নাই",""].includes(low)) {
+        if (lower === "skip" || lower === "নাই" || !text) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
           return;
         }
@@ -446,7 +447,10 @@
         switch (fixedProfileStep) {
           case 0:
             const [d, m, y] = text.split("-").map(Number);
-            if (!d || !m || !y || isNaN(d)) return addMessage("ফরম্যাট: DD-MM-YYYY");
+            if (!d || !m || !y || isNaN(d)) {
+              addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
+              return;
+            }
             const dateObj = new Date(y, m-1, d);
             profileData.dateOfBirth = Math.floor(dateObj.getTime() / 1000);
             break;
@@ -455,6 +459,7 @@
         }
 
         fixedProfileStep++;
+
         if (fixedProfileStep === 3) {
           try {
             const tx = await contract.setFixedProfile(
@@ -466,10 +471,11 @@
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সফলভাবে সেট হয়েছে!");
             fixedProfileStep = -1;
-            await checkProfiles();
+            await checkProfiles(); // পরের ধাপে যাওয়ার জন্য
           } catch (err) {
             addMessage("সমস্যা: " + (err.reason || err.message || "Unknown error"));
             fixedProfileStep = -1;
+            await checkProfiles(); // এরর হলেও চেক করো
           }
         } else {
           askFixedProfile();
@@ -725,9 +731,6 @@
       addMessage("দুঃখিত, আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো\n• হাই / হ্যালো");
     };
 
-    // ========================================
-    //          চার্ট আপডেট
-    // ========================================
     function updateChart(records) {
       const ctx = document.getElementById("recordChart").getContext("2d");
       if (chartInstance) chartInstance.destroy();
@@ -739,7 +742,6 @@
 
       document.getElementById("recordChart").style.display = "block";
 
-      // লাইন চার্ট (সব রোগের রিডিং ট্রেন্ড)
       const lineLabels = [];
       const lineData = [];
 
@@ -751,17 +753,6 @@
         });
       });
 
-      // পাই চার্টের জন্য ডেটা (রোগের নাম অনুসারে কতবার রেকর্ড হয়েছে)
-      const diseaseCounts = {};
-      records.forEach(disease => {
-        const name = disease.diseaseName.trim();
-        diseaseCounts[name] = (diseaseCounts[name] || 0) + disease.dailyRecords.length;
-      });
-
-      const pieLabels = Object.keys(diseaseCounts);
-      const pieData = Object.values(diseaseCounts);
-
-      // লাইন চার্ট
       chartInstance = new Chart(ctx, {
         type: "line",
         data: {
@@ -786,46 +777,6 @@
           },
           scales: {
             y: { beginAtZero: true }
-          }
-        }
-      });
-
-      // পাই চার্ট (আন্ডারে)
-      let pieCanvas = document.getElementById("pieChart");
-      if (!pieCanvas) {
-        pieCanvas = document.createElement("canvas");
-        pieCanvas.id = "pieChart";
-        pieCanvas.width = 600;
-        pieCanvas.height = 300;
-        pieCanvas.style.margin = "30px auto";
-        pieCanvas.style.display = "block";
-        pieCanvas.style.maxWidth = "100%";
-        pieCanvas.style.borderRadius = "16px";
-        pieCanvas.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-        document.body.appendChild(pieCanvas);
-      }
-      pieCanvas.style.display = "block";
-
-      new Chart(pieCanvas.getContext("2d"), {
-        type: "pie",
-        data: {
-          labels: pieLabels,
-          datasets: [{
-            label: "রোগের রেকর্ড সংখ্যা",
-            data: pieData,
-            backgroundColor: [
-              "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
-              "#9966FF", "#FF9F40", "#E7E9ED", "#C9CBCF"
-            ],
-            borderColor: "#fff",
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-            title: { display: true, text: "রোগ অনুসারে রেকর্ডের পরিমাণ (পাই চার্ট)", font: { size: 16 } }
           }
         }
       });
