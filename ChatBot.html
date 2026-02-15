@@ -22,7 +22,7 @@
     body {
       margin: 0;
       padding: 20px;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg-gradient);
       color: var(--text-light);
       min-height: 100vh;
@@ -172,10 +172,6 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
 
-    #pieChart {
-      margin-top: 40px !important;
-    }
-
     @media (max-width: 600px) {
       body { padding: 12px; }
       #chat-body { height: 380px; }
@@ -213,11 +209,7 @@
 
   <div id="status">স্ট্যাটাস: সংযুক্ত নয়</div>
 
-  <!-- স্পেসিফিক রোগের লাইন গ্রাফের জন্য -->
-  <canvas id="recordChart" width="600" height="300" style="display: none;"></canvas>
-
-  <!-- সব রোগের পাই চার্ট -->
-  <canvas id="pieChart" width="600" height="400" style="display: none;"></canvas>
+  <canvas id="recordChart" width="600" height="300"></canvas>
 
   <script>
     const CONTRACT_ADDRESS = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
@@ -236,8 +228,7 @@
     let signer = null;
     let contract = null;
     let userAddress = null;
-    let lineChartInstance = null;
-    let pieChartInstance = null;
+    let chartInstance = null;
 
     let fixedProfileStep = -1;
     let updatableProfileStep = -1;
@@ -255,7 +246,7 @@
       msgDiv.innerHTML = text;
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
-      document.getElementById("userInput").focus();
+      document.getElementById("userInput").focus(); // প্রতিটা প্রশ্নের পর ইনপুটে ফোকাস
     }
 
     function updateStatus(text) {
@@ -311,13 +302,9 @@
       document.getElementById("userInput").disabled = true;
       addMessage("আপনি ডিসকানেক্ট হয়েছেন। আবার কানেক্ট করুন।");
 
-      if (lineChartInstance) {
-        lineChartInstance.destroy();
-        lineChartInstance = null;
-      }
-      if (pieChartInstance) {
-        pieChartInstance.destroy();
-        pieChartInstance = null;
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
       }
     }
 
@@ -353,7 +340,9 @@
         "আপনার লিঙ্গ লিখুন (Male / Female / Other)",
         "আপনার ব্লাড গ্রুপ লিখুন (যেমন: A+, O-, B- ইত্যাদি)"
       ];
-      addMessage(questions[fixedProfileStep]);
+      if (fixedProfileStep >= 0 && fixedProfileStep < questions.length) {
+        addMessage(questions[fixedProfileStep]);
+      }
       document.getElementById("userInput").focus();
     }
 
@@ -364,7 +353,9 @@
         "আপনার অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)",
         "দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)"
       ];
-      addMessage(questions[updatableProfileStep]);
+      if (updatableProfileStep >= 0 && updatableProfileStep < questions.length) {
+        addMessage(questions[updatableProfileStep]);
+      }
       document.getElementById("userInput").focus();
     }
 
@@ -379,10 +370,13 @@
         "রোগের বিস্তারিত বিবরণ / নোট (অপশনাল, skip লিখতে পারেন)",
         "IPFS CID (যদি কোনো রিপোর্ট আপলোড করেন, অপশনাল)"
       ];
-      addMessage(questions[recordStep]);
+      if (recordStep >= 0 && recordStep < questions.length) {
+        addMessage(questions[recordStep]);
+      }
       document.getElementById("userInput").focus();
     }
 
+    // AI পরামর্শ ফাংশন
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
@@ -449,26 +443,37 @@
 
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল
+      // ফিক্সড প্রোফাইল - ধাপে ধাপে প্রশ্ন (ফিক্স করা)
       if (fixedProfileStep >= 0) {
-        if (["skip","নাই",""].includes(low)) {
+        if (lower === "skip" || lower === "নাই" || !text) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
           return;
         }
 
+        // ডেটা সংরক্ষণ
         switch (fixedProfileStep) {
           case 0:
             const [d, m, y] = text.split("-").map(Number);
-            if (!d || !m || !y || isNaN(d)) return addMessage("ফরম্যাট: DD-MM-YYYY");
+            if (!d || !m || !y || isNaN(d)) {
+              addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
+              return;
+            }
             const dateObj = new Date(y, m-1, d);
+            if (isNaN(dateObj.getTime())) {
+              addMessage("তারিখ ঠিকমতো লিখুন।");
+              return;
+            }
             profileData.dateOfBirth = Math.floor(dateObj.getTime() / 1000);
             break;
           case 1: profileData.gender = text.trim(); break;
           case 2: profileData.bloodGroup = text.trim(); break;
         }
 
+        // পরের ধাপে যাওয়া
         fixedProfileStep++;
+
         if (fixedProfileStep === 3) {
+          // tx পাঠানো
           try {
             const tx = await contract.setFixedProfile(
               profileData.dateOfBirth,
@@ -478,15 +483,13 @@
             addMessage(`ফিক্সড প্রোফাইল সেট হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সফলভাবে সেট হয়েছে!");
-            fixedProfileStep = -1;
-            await checkProfiles();
           } catch (err) {
             addMessage("সমস্যা: " + (err.reason || err.message || "Unknown error"));
-            fixedProfileStep = -1;
-            await checkProfiles();
           }
+          fixedProfileStep = -1;
+          await checkProfiles(); // পরের ধাপে যাওয়ার জন্য চেক
         } else {
-          askFixedProfile();
+          askFixedProfile(); // পরের প্রশ্ন দেখাও
         }
         return;
       }
@@ -631,7 +634,7 @@
 
           addMessage(reply);
 
-          // পাই চার্ট আপডেট করা
+          // পাই চার্ট আপডেট
           updateChart(records);
 
           // AI পরামর্শ
@@ -656,7 +659,7 @@
         return;
       }
 
-      // রোগের নাম দিলে স্পেসিফিক লাইন গ্রাফ বানানো
+      // রোগের নাম দিলে স্পেসিফিক গ্রাফ বানানো
       if (waitingForDiseaseGraph) {
         const requestedDisease = text.trim().toLowerCase();
 
@@ -688,11 +691,11 @@
               }
 
               const ctx = lineCanvas.getContext("2d");
-              if (lineChartInstance) lineChartInstance.destroy();
+              if (chartInstance) chartInstance.destroy();
 
               lineCanvas.style.display = "block";
 
-              lineChartInstance = new Chart(ctx, {
+              chartInstance = new Chart(ctx, {
                 type: "line",
                 data: {
                   labels,
@@ -746,9 +749,6 @@
       addMessage("দুঃখিত, আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো\n• হাই / হ্যালো");
     };
 
-    // ========================================
-    //          পাই চার্ট আপডেট (শুধু এটাই রাখা হলো)
-    // ========================================
     function updateChart(records) {
       const pieCanvas = document.getElementById("pieChart");
       if (!pieCanvas) {
