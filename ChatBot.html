@@ -137,7 +137,7 @@
   <div id="status">Status: Not connected</div>
   <canvas id="recordChart" width="500" height="280"></canvas>
   <script>
-    const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
+    const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
     const abi = [
       {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_encryptedData","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
       {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
