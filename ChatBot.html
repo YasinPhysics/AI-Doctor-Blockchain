@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI ডাক্তার - রোগীর রেকর্ড চ্যাটবট</title>
 
+  <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
   <style>
     :root {
@@ -187,16 +189,17 @@
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
     <div id="chat-body">
       <div class="message bot">
-        হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।<br>
-        প্রথমে ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।<br><br>
-        উদাহরণ:<br>
+        হ্যালো! 👋 আমি তোমার AI ডাক্তার বন্ধু।<br><br>
+        আমি তোমার স্বাস্থ্য রেকর্ড নিরাপদে রাখতে সাহায্য করব।<br>
+        প্রথমে ওয়ালেট কানেক্ট করো, তারপর আমরা শুরু করব।<br><br>
+        তুমি যা করতে পারো:<br>
         • রেকর্ড দেখাও / আমার হিস্ট্রি<br>
         • অ্যাড করো / নতুন রেকর্ড যোগ করো
       </div>
     </div>
 
     <div id="input-area">
-      <input type="text" id="userInput" placeholder="আপনার বার্তা লিখুন..." autocomplete="off" />
+      <input type="text" id="userInput" placeholder="আমাকে বলো কী করতে চাও..." autocomplete="off" />
       <button id="sendBtn">পাঠান</button>
     </div>
   </div>
@@ -211,6 +214,9 @@
   <canvas id="recordChart" width="600" height="300"></canvas>
 
   <script>
+    // ========================================
+    //          কনফিগারেশন
+    // ========================================
     const CONTRACT_ADDRESS = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
     const ARC_TESTNET_CHAIN_ID = 5042002;
 
@@ -232,11 +238,13 @@
     let fixedProfileStep = -1;
     let updatableProfileStep = -1;
     let recordStep = -1;
+
     let profileData = {};
     let recordData = {};
 
-    let waitingForDiseaseGraph = false; // নতুন ভেরিয়েবল — গ্রাফের জন্য অপেক্ষা করছে কি না
-
+    // ========================================
+    //          UI হেল্পার ফাংশন
+    // ========================================
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -250,6 +258,9 @@
       document.getElementById("status").textContent = `স্ট্যাটাস: ${text}`;
     }
 
+    // ========================================
+    //          ওয়ালেট কানেকশন
+    // ========================================
     async function connectWallet() {
       if (!window.ethereum) {
         updateStatus("ওয়ালেট পাওয়া যায়নি");
@@ -290,7 +301,6 @@
     function disconnectWallet() {
       provider = signer = contract = userAddress = null;
       fixedProfileStep = updatableProfileStep = recordStep = -1;
-      waitingForDiseaseGraph = false;
       updateStatus("সংযুক্ত নয়");
       document.getElementById("connectBtn").style.display = "inline-block";
       document.getElementById("logoutBtn").style.display = "none";
@@ -304,6 +314,9 @@
       }
     }
 
+    // ========================================
+    //          প্রোফাইল চেক ও সেটআপ
+    // ========================================
     async function checkProfiles() {
       try {
         const fixed = await contract.getFixedProfile(userAddress);
@@ -363,13 +376,16 @@
       addMessage(questions[recordStep]);
     }
 
-    // AI পরামর্শ ফাংশন
+    // ========================================
+    //          AI পরামর্শ ফাংশন
+    // ========================================
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
       try {
         addMessage("AI বন্ধুকে তোমার রেকর্ড দেখাচ্ছি... একটু অপেক্ষা করো।");
 
+        // BigInt → string কনভার্ট (JSON.stringify-এর জন্য)
         const serializableRecords = records.map(r => ({
           diseaseName: r.diseaseName,
           dailyRecords: r.dailyRecords.map(dr => ({
@@ -415,6 +431,9 @@
       }
     }
 
+    // ========================================
+    //          মূল ইনপুট হ্যান্ডলার
+    // ========================================
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
@@ -430,9 +449,9 @@
 
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল
+      // ১. ফিক্সড প্রোফাইল সেট করা হচ্ছে
       if (fixedProfileStep >= 0) {
-        if (["skip","নাই",""].includes(low)) {
+        if (lower === "skip" || lower === "নাই" || !text) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
           return;
         }
@@ -471,7 +490,7 @@
         return;
       }
 
-      // আপডেটেবল প্রোফাইল
+      // ২. আপডেটেবল প্রোফাইল সেট করা হচ্ছে
       if (updatableProfileStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         if (skipped && updatableProfileStep < 2) {
@@ -509,7 +528,7 @@
         return;
       }
 
-      // রেকর্ড অ্যাড
+      // ৩. রেকর্ড অ্যাড মোড
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
 
@@ -528,8 +547,11 @@
 
         if (recordStep === 8) {
           try {
+            const functionSelector = "0xcaf5bb2c";
+            const coder = new ethers.AbiCoder();
+
             const medicines = [];
-            if (recordData.medicineName && recordData.medicineName.trim()) {
+            if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
               medicines.push([
                 recordData.medicineName.trim(),
                 recordData.dose || "",
@@ -538,21 +560,25 @@
               ]);
             }
 
-            const iface = new ethers.Interface(ABI);
-            const encoded = iface.encodeFunctionData("addDailyRecord", [
-              recordData.diseaseName || "",
-              recordData.readingValue || "",
-              medicines,
-              recordData.ipfsCid || "",
-              recordData.diseaseDetails || ""
-            ]);
+            const encodedParams = coder.encode(
+              ["string", "string", "tuple(string,string,string,uint256)[]", "string", "string"],
+              [
+                recordData.diseaseName || "",
+                recordData.readingValue || "",
+                medicines,
+                recordData.ipfsCid || "",
+                recordData.diseaseDetails || ""
+              ]
+            );
+
+            const fullCalldata = functionSelector + encodedParams.slice(2);
 
             const tx = await signer.sendTransaction({
               to: CONTRACT_ADDRESS,
-              data: encoded
+              data: fullCalldata
             });
 
-            addMessage(`রেকর্ড যোগ হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
+            addMessage(`রেকর্ড অ্যাড হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
             await tx.wait();
             addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
             recordStep = -1;
@@ -567,7 +593,7 @@
         return;
       }
 
-      // রেকর্ড দেখাও + AI পরামর্শ + রোগের গ্রাফ চাওয়ার প্রশ্ন
+      // ৪. সাধারণ কমান্ড (রেকর্ড দেখাও + AI পরামর্শ)
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
@@ -576,11 +602,6 @@
           if (records.length === 0) {
             reply += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
           } else {
-            // রোগের লিস্ট তৈরি করা
-            const diseaseList = [...new Set(records.map(r => r.diseaseName))];
-
-            reply += "আপনার রোগগুলো: " + diseaseList.join(", ") + "\n\n";
-
             records.forEach(disease => {
               reply += `রোগ: ${disease.diseaseName}\n`;
               disease.dailyRecords.forEach(r => {
@@ -606,91 +627,13 @@
           addMessage(reply);
           updateChart(records);
 
-          // AI পরামর্শ
+          // AI পরামর্শ আনা
           if (records.length > 0) {
             await getAIAdvice(records);
           }
-
-          // রোগের গ্রাফ চাওয়ার প্রশ্ন (যদি রোগ থাকে)
-          if (records.length > 0) {
-            const diseaseList = [...new Set(records.map(r => r.diseaseName))];
-            addMessage(
-              `আপনার রোগগুলোর মধ্যে কোনটার বিস্তারিত গ্রাফ দেখতে চান?<br>` +
-              `উদাহরণ: <b>diabetes</b>, <b>fever</b>, <b>hypertension</b> ইত্যাদি।<br>` +
-              `একটা রোগের নাম লিখুন (যেকোনো একটা)।<br>` +
-              `(যদি গ্রাফ না চান তাহলে অন্য কিছু লিখুন বা চুপ থাকুন)`
-            );
-            waitingForDiseaseGraph = true; // পরের ইনপুট গ্রাফের জন্য অপেক্ষা করছে
-          }
-
         } catch (err) {
           addMessage("রেকর্ড দেখাতে সমস্যা: " + (err.message || "Unknown error"));
         }
-        return;
-      }
-
-      // রোগের নাম দিলে গ্রাফ বানানো (waitingForDiseaseGraph = true হলে)
-      if (waitingForDiseaseGraph) {
-        const requestedDisease = text.trim().toLowerCase();
-
-        try {
-          const records = await contract.getAllDiseaseRecords(userAddress);
-
-          const filtered = records.filter(r => r.diseaseName.toLowerCase() === requestedDisease);
-
-          if (filtered.length === 0) {
-            addMessage(`আপনার রেকর্ডে "${requestedDisease}" নামে কোনো রোগ পাওয়া যায়নি।`);
-          } else {
-            // শুধু এই রোগের ডেটা নিয়ে গ্রাফ
-            const labels = [];
-            const data = [];
-
-            filtered.forEach(disease => {
-              disease.dailyRecords.forEach(r => {
-                const date = new Date(Number(r.timestamp) * 1000).toLocaleDateString("bn-BD");
-                labels.push(date);
-                const val = parseFloat(r.readingValue?.split(" ")[0]) || 0;
-                data.push(val);
-              });
-            });
-
-            const ctx = document.getElementById("recordChart").getContext("2d");
-            if (chartInstance) chartInstance.destroy();
-
-            document.getElementById("recordChart").style.display = "block";
-
-            chartInstance = new Chart(ctx, {
-              type: "line",
-              data: {
-                labels,
-                datasets: [{
-                  label: `${requestedDisease} এর রিডিং`,
-                  data,
-                  borderColor: "#e74c3c",
-                  backgroundColor: "rgba(231, 76, 60, 0.2)",
-                  fill: true,
-                  tension: 0.4
-                }]
-              },
-              options: {
-                responsive: true,
-                plugins: {
-                  legend: { display: true },
-                  title: { display: true, text: `${requestedDisease} এর টাইমলাইন গ্রাফ` }
-                },
-                scales: {
-                  y: { beginAtZero: true }
-                }
-              }
-            });
-
-            addMessage(`"${requestedDisease}" এর গ্রাফ তৈরি করা হয়েছে। উপরে দেখুন।`);
-          }
-        } catch (err) {
-          addMessage("গ্রাফ তৈরি করতে সমস্যা: " + err.message);
-        }
-
-        waitingForDiseaseGraph = false; // অপেক্ষা শেষ
         return;
       }
 
@@ -710,6 +653,9 @@
       addMessage("দুঃখিত, আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো\n• হাই / হ্যালো");
     };
 
+    // ========================================
+    //          চার্ট আপডেট
+    // ========================================
     function updateChart(records) {
       const ctx = document.getElementById("recordChart").getContext("2d");
       if (chartInstance) chartInstance.destroy();
@@ -752,7 +698,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: true, position: "top" },
-            title: { display: true, text: "সব রোগের রিডিং ট্রেন্ড", font: { size: 16 } }
+            title: { display: true, text: "রোগের রিডিং ট্রেন্ড", font: { size: 16 } }
           },
           scales: {
             y: { beginAtZero: true }
@@ -761,6 +707,9 @@
       });
     }
 
+    // ========================================
+    //          ইভেন্ট লিসেনার
+    // ========================================
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
