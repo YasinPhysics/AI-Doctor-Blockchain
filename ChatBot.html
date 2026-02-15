@@ -315,7 +315,7 @@
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
 
-          // আপডেটেবল প্রোফাইল চেক করা (এখানে গুরুত্বপূর্ণ ফিক্স)
+          // আপডেটেবল প্রোফাইল চেক (ওজন-উচ্চতা)
           const profile = await contract.getPatientProfile(userAddress);
           if (profile.weightKg > 0n && profile.heightCm > 0n) {
             addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
@@ -344,9 +344,13 @@
         "আপনার লিঙ্গ লিখুন (Male / Female / Other)",
         "আপনার ব্লাড গ্রুপ লিখুন (যেমন: A+, O-, B- ইত্যাদি)"
       ];
+
       if (fixedProfileStep >= 0 && fixedProfileStep < questions.length) {
         addMessage(questions[fixedProfileStep]);
+      } else {
+        console.warn("fixedProfileStep out of range:", fixedProfileStep);
       }
+
       document.getElementById("userInput").focus();
     }
 
@@ -357,9 +361,13 @@
         "আপনার অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)",
         "দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা করুন, না থাকলে skip লিখুন)"
       ];
+
       if (updatableProfileStep >= 0 && updatableProfileStep < questions.length) {
         addMessage(questions[updatableProfileStep]);
+      } else {
+        console.warn("updatableProfileStep out of range:", updatableProfileStep);
       }
+
       document.getElementById("userInput").focus();
     }
 
@@ -374,13 +382,14 @@
         "রোগের বিস্তারিত বিবরণ / নোট (অপশনাল, skip লিখতে পারেন)",
         "IPFS CID (যদি কোনো রিপোর্ট আপলোড করেন, অপশনাল)"
       ];
+
       if (recordStep >= 0 && recordStep < questions.length) {
         addMessage(questions[recordStep]);
       }
+
       document.getElementById("userInput").focus();
     }
 
-    // AI পরামর্শ ফাংশন
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
@@ -447,7 +456,7 @@
 
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল - ধাপে ধাপে প্রশ্ন (ফিক্স করা)
+      // ফিক্সড প্রোফাইল - ধাপে ধাপে প্রশ্ন (সম্পূর্ণ ফিক্স করা)
       if (fixedProfileStep >= 0) {
         if (lower === "skip" || lower === "নাই" || !text) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
