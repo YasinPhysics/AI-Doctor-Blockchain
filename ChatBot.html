@@ -314,9 +314,12 @@
         if (fixed.dateOfBirth !== 0n) {
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
+
+          // আপডেটেবল প্রোফাইল চেক করা (এখানে গুরুত্বপূর্ণ ফিক্স)
           const profile = await contract.getPatientProfile(userAddress);
           if (profile.weightKg > 0n && profile.heightCm > 0n) {
             addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
+            updatableProfileStep = -1;
           } else {
             addMessage("ওজন, উচ্চতা ইত্যাদি এখনো সেট করা হয়নি। চলুন সেট করি।");
             updatableProfileStep = 0;
@@ -328,6 +331,7 @@
           askFixedProfile();
         }
       } catch (err) {
+        console.error("checkProfiles error:", err);
         addMessage("প্রোফাইল চেক করতে সমস্যা হয়েছে। চলুন ফিক্সড প্রোফাইল দিয়ে শুরু করি।");
         fixedProfileStep = 0;
         askFixedProfile();
