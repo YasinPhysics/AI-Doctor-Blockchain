@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI ডাক্তার - রোগীর রেকর্ড চ্যাটবট</title>
 
-  <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -23,7 +22,7 @@
     body {
       margin: 0;
       padding: 20px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: var(--bg-gradient);
       color: var(--text-light);
       min-height: 100vh;
@@ -234,12 +233,11 @@
     let fixedProfileStep = -1;
     let updatableProfileStep = -1;
     let recordStep = -1;
+    let waitingForDiseaseGraph = false;
+    let allDiseases = [];
 
     let profileData = {};
     let recordData = {};
-
-    let waitingForDiseaseGraph = false; // গ্রাফের জন্য অপেক্ষা করছে কি না
-    let allDiseases = []; // সব রোগের লিস্ট সংরক্ষণ করার জন্য
 
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
@@ -368,9 +366,7 @@
       addMessage(questions[recordStep]);
     }
 
-    // ========================================
-    //          AI পরামর্শ ফাংশন
-    // ========================================
+    // AI পরামর্শ ফাংশন
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
@@ -593,7 +589,7 @@
           if (records.length === 0) {
             reply += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
           } else {
-            // সব রোগের নাম সংগ্রহ করা
+            // সব রোগের নাম সংগ্রহ
             allDiseases = [...new Set(records.map(r => r.diseaseName.trim()))];
 
             reply += "আপনার রোগগুলো: " + allDiseases.join(", ") + "\n\n";
@@ -729,109 +725,111 @@
       addMessage("দুঃখিত, আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো\n• হাই / হ্যালো");
     };
 
+    // ========================================
+    //          চার্ট আপডেট
+    // ========================================
     function updateChart(records) {
-  const ctx = document.getElementById("recordChart").getContext("2d");
-  if (chartInstance) chartInstance.destroy();
+      const ctx = document.getElementById("recordChart").getContext("2d");
+      if (chartInstance) chartInstance.destroy();
 
-  if (!records || records.length === 0) {
-    document.getElementById("recordChart").style.display = "none";
-    return;
-  }
-
-  document.getElementById("recordChart").style.display = "block";
-
-  // ১. লাইন চার্ট (আগের মতোই — সব রোগের রিডিং ট্রেন্ড)
-  const lineLabels = [];
-  const lineData = [];
-
-  records.forEach(disease => {
-    disease.dailyRecords.forEach(r => {
-      lineLabels.push(`${disease.diseaseName} - ${new Date(Number(r.timestamp)*1000).toLocaleDateString("bn-BD")}`);
-      const val = parseFloat(r.readingValue?.split(" ")[0]) || 0;
-      lineData.push(val);
-    });
-  });
-
-  // ২. পাই চার্টের জন্য ডেটা তৈরি (রোগের নাম অনুসারে কতবার রেকর্ড হয়েছে)
-  const diseaseCounts = {};
-  records.forEach(disease => {
-    const name = disease.diseaseName.trim();
-    diseaseCounts[name] = (diseaseCounts[name] || 0) + disease.dailyRecords.length;
-  });
-
-  const pieLabels = Object.keys(diseaseCounts);
-  const pieData = Object.values(diseaseCounts);
-
-  // একই canvas-এ দুটো চার্ট (লাইন + পাই) দেখানোর জন্য নতুন canvas যোগ করা
-  let pieCanvas = document.getElementById("pieChart");
-  if (!pieCanvas) {
-    pieCanvas = document.createElement("canvas");
-    pieCanvas.id = "pieChart";
-    pieCanvas.width = 600;
-    pieCanvas.height = 300;
-    pieCanvas.style.margin = "30px auto";
-    pieCanvas.style.display = "block";
-    pieCanvas.style.maxWidth = "100%";
-    pieCanvas.style.borderRadius = "16px";
-    pieCanvas.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-    document.body.appendChild(pieCanvas);
-  }
-  pieCanvas.style.display = "block";
-
-  // লাইন চার্ট
-  chartInstance = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: lineLabels,
-      datasets: [{
-        label: "সব রোগের রিডিং ট্রেন্ড",
-        data: lineData,
-        borderColor: "#009688",
-        backgroundColor: "rgba(0,150,136,0.18)",
-        fill: true,
-        tension: 0.35,
-        pointRadius: 4,
-        pointHoverRadius: 7
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: "top" },
-        title: { display: true, text: "সব রোগের রিডিং ট্রেন্ড", font: { size: 16 } }
-      },
-      scales: {
-        y: { beginAtZero: true }
+      if (!records || records.length === 0) {
+        document.getElementById("recordChart").style.display = "none";
+        return;
       }
-    }
-  });
 
-  // পাই চার্ট (রোগের ফ্রিকোয়েন্সি)
-  new Chart(pieCanvas.getContext("2d"), {
-    type: "pie",
-    data: {
-      labels: pieLabels,
-      datasets: [{
-        label: "রোগের রেকর্ড সংখ্যা",
-        data: pieData,
-        backgroundColor: [
-          "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
-          "#9966FF", "#FF9F40", "#E7E9ED", "#C9CBCF"
-        ],
-        borderColor: "#fff",
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: "top" },
-        title: { display: true, text: "রোগ অনুসারে রেকর্ডের পরিমাণ (পাই চার্ট)", font: { size: 16 } }
+      document.getElementById("recordChart").style.display = "block";
+
+      // লাইন চার্ট (সব রোগের রিডিং ট্রেন্ড)
+      const lineLabels = [];
+      const lineData = [];
+
+      records.forEach(disease => {
+        disease.dailyRecords.forEach(r => {
+          lineLabels.push(`${disease.diseaseName} - ${new Date(Number(r.timestamp)*1000).toLocaleDateString("bn-BD")}`);
+          const val = parseFloat(r.readingValue?.split(" ")[0]) || 0;
+          lineData.push(val);
+        });
+      });
+
+      // পাই চার্টের জন্য ডেটা (রোগের নাম অনুসারে কতবার রেকর্ড হয়েছে)
+      const diseaseCounts = {};
+      records.forEach(disease => {
+        const name = disease.diseaseName.trim();
+        diseaseCounts[name] = (diseaseCounts[name] || 0) + disease.dailyRecords.length;
+      });
+
+      const pieLabels = Object.keys(diseaseCounts);
+      const pieData = Object.values(diseaseCounts);
+
+      // লাইন চার্ট
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: lineLabels,
+          datasets: [{
+            label: "সব রোগের রিডিং ট্রেন্ড",
+            data: lineData,
+            borderColor: "#009688",
+            backgroundColor: "rgba(0,150,136,0.18)",
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: "top" },
+            title: { display: true, text: "সব রোগের রিডিং ট্রেন্ড", font: { size: 16 } }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      // পাই চার্ট (আন্ডারে)
+      let pieCanvas = document.getElementById("pieChart");
+      if (!pieCanvas) {
+        pieCanvas = document.createElement("canvas");
+        pieCanvas.id = "pieChart";
+        pieCanvas.width = 600;
+        pieCanvas.height = 300;
+        pieCanvas.style.margin = "30px auto";
+        pieCanvas.style.display = "block";
+        pieCanvas.style.maxWidth = "100%";
+        pieCanvas.style.borderRadius = "16px";
+        pieCanvas.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
+        document.body.appendChild(pieCanvas);
       }
+      pieCanvas.style.display = "block";
+
+      new Chart(pieCanvas.getContext("2d"), {
+        type: "pie",
+        data: {
+          labels: pieLabels,
+          datasets: [{
+            label: "রোগের রেকর্ড সংখ্যা",
+            data: pieData,
+            backgroundColor: [
+              "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+              "#9966FF", "#FF9F40", "#E7E9ED", "#C9CBCF"
+            ],
+            borderColor: "#fff",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "top" },
+            title: { display: true, text: "রোগ অনুসারে রেকর্ডের পরিমাণ (পাই চার্ট)", font: { size: 16 } }
+          }
+        }
+      });
     }
-  });
-}
 
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
