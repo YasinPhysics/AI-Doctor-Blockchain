@@ -522,36 +522,54 @@
         recordStep++;
         if (recordStep === 8) {
           try {
-            const medicines = [];
-            if (recordData.medicineName && recordData.medicineName.trim() && recordData.medicineName.toLowerCase() !== "skip") {
-              medicines.push([
-                recordData.medicineName.trim(),
-                recordData.dose || "",
-                recordData.frequency || "",
-                BigInt(recordData.durationDays || 0)
-              ]);
-            }
-            const tx = await contract.addDailyRecord(
-              recordData.diseaseName || "",
-              recordData.readingValue || "",
-              medicines,
-              recordData.ipfsCid || "",
-              recordData.diseaseDetails || ""
-            );
-            addMessage(`রেকর্ড অ্যাড হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
-            await tx.wait();
-            addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
-            recordStep = -1;
-          } catch (err) {
-            console.error("addDailyRecord error:", err);
-            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || "Unknown error"));
-            recordStep = -1;
-          }
-        } else {
-          askRecord();
-        }
-        return;
+            // ──────────────────────────────────────────────────────────────
+      // এখান থেকে নতুন কোড শুরু (raw calldata)
+      const medicines = [];
+      if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
+        medicines.push([
+          recordData.medicineName.trim(),
+          recordData.dose || "",
+          recordData.frequency || "",
+          BigInt(recordData.durationDays || 0)
+        ]);
       }
+
+      const iface = new ethers.Interface(ABI);
+      const functionSelector = "0xcaf5bb2c";  // আসল selector (এটা কখনো পরিবর্তন করবেন না)
+
+      const encoded = iface.encodeFunctionData("addDailyRecord", [
+        recordData.diseaseName || "",
+        recordData.readingValue || "",
+        medicines,
+        recordData.ipfsCid || "",
+        recordData.diseaseDetails || ""
+      ]);
+
+      // encoded-এর প্রথম 10 অক্ষরই selector + encoded params
+      const calldata = encoded;  // ইতিমধ্যে 0x + selector + data আছে
+
+      addMessage(`রেকর্ড অ্যাড হচ্ছে... (raw call)`);
+
+      const tx = await signer.sendTransaction({
+        to: CONTRACT_ADDRESS,
+        data: calldata
+      });
+
+      addMessage(`Tx sent: ${tx.hash.slice(0,10)}...`);
+      await tx.wait();
+      addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
+      recordStep = -1;
+
+    } catch (err) {
+      console.error("Raw addDailyRecord error:", err);
+      addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || JSON.stringify(err)));
+      recordStep = -1;
+    }
+  } else {
+    askRecord();
+  }
+  return;
+}
 
       // রেকর্ড দেখাও
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
