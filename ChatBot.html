@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI ডাক্তার - রোগীর রেকর্ড চ্যাটবট</title>
-
-  <!-- External Libraries -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Doctor - Patient Records Chatbot</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -18,13 +15,7 @@
       background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
       color: #333;
     }
-
-    h1 {
-      text-align: center;
-      color: #00695c;
-      margin-bottom: 10px;
-    }
-
+    h1 { text-align: center; color: #00695c; margin-bottom: 10px; }
     #chat-container {
       max-width: 720px;
       margin: 0 auto 20px;
@@ -33,7 +24,6 @@
       box-shadow: 0 6px 25px rgba(0,0,0,0.12);
       overflow: hidden;
     }
-
     #chat-header {
       background: linear-gradient(90deg, #009688, #00796b);
       color: white;
@@ -42,14 +32,12 @@
       font-weight: bold;
       font-size: 1.3em;
     }
-
     #chat-body {
       height: 420px;
       overflow-y: auto;
       padding: 20px;
       background: #f8f9fa;
     }
-
     .message {
       margin: 14px 0;
       padding: 14px 20px;
@@ -58,28 +46,24 @@
       line-height: 1.5;
       word-wrap: break-word;
     }
-
     .user {
       background: #009688;
       color: white;
       margin-left: auto;
       border-bottom-right-radius: 4px;
     }
-
     .bot {
       background: #e0f2f1;
       color: #004d40;
       margin-right: auto;
       border-bottom-left-radius: 4px;
     }
-
     #input-area {
       display: flex;
       padding: 16px;
       background: white;
       border-top: 1px solid #e0e0e0;
     }
-
     #userInput {
       flex: 1;
       padding: 14px 18px;
@@ -88,7 +72,6 @@
       outline: none;
       font-size: 1em;
     }
-
     #sendBtn {
       margin-left: 12px;
       padding: 14px 28px;
@@ -99,12 +82,10 @@
       cursor: pointer;
       font-weight: bold;
     }
-
     .auth-buttons {
       text-align: center;
       margin: 20px 0;
     }
-
     #connectBtn, #logoutBtn {
       padding: 14px 32px;
       border: none;
@@ -113,18 +94,8 @@
       font-size: 1.1em;
       margin: 0 12px;
     }
-
-    #connectBtn {
-      background: #ff5722;
-      color: white;
-    }
-
-    #logoutBtn {
-      background: #e74c3c;
-      color: white;
-      display: none;
-    }
-
+    #connectBtn { background: #ff5722; color: white; }
+    #logoutBtn { background: #e74c3c; color: white; display: none; }
     #status {
       text-align: center;
       margin: 15px;
@@ -132,7 +103,6 @@
       font-size: 1.05em;
       font-weight: 500;
     }
-
     canvas {
       margin: 25px auto;
       display: block;
@@ -143,99 +113,49 @@
   </style>
 </head>
 <body>
-
   <h1>AI Doctor - Patient Records Chatbot</h1>
-
   <div id="chat-container">
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
-
     <div id="chat-body">
-      <div class="message bot">
-        হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।1.0<br>
-        ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।<br><br>
-        উদাহরণ:<br>
-        • রেকর্ড দেখাও / আমার হিস্ট্রি<br>
-        • অ্যাড করো: Fever 2025-02-10<br>
-        • আমার ওষুধ কী কী?<br>
-        • নতুন ডাটা যোগ করো
-      </div>
+      <div class="message bot">হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।
+ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।
+উদাহরণ:
+• রেকর্ড দেখাও / আমার হিস্ট্রি
+• অ্যাড করো: Fever 2025-02-10
+• আমার ওষুধ কী কী?
+• নতুন ডাটা যোগ করো</div>
     </div>
-
     <div id="input-area">
       <input type="text" id="userInput" placeholder="আপনার মেসেজ লিখুন..." />
       <button id="sendBtn">পাঠান</button>
     </div>
   </div>
-
   <div class="auth-buttons">
     <button id="connectBtn">ওয়ালেট কানেক্ট করুন (Arc Testnet)</button>
     <button id="logoutBtn">লগআউট / ডিসকানেক্ট</button>
   </div>
-
   <div id="status">Status: Not connected</div>
-
   <canvas id="recordChart" width="500" height="280"></canvas>
-
   <script>
-    // ========================================
-    //          কনফিগারেশন
-    // ========================================
     const contractAddress = "0xa897d5FC62358637F74e7Db70f54BA9EB82Bc3f2";
-
     const abi = [
-      {
-        "inputs": [
-          {"internalType": "address", "name": "patient", "type": "address"},
-          {"internalType": "string", "name": "_encryptedData", "type": "string"}
-        ],
-        "name": "addRecord",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {"internalType": "address", "name": "patient", "type": "address"}
-        ],
-        "name": "getRecords",
-        "outputs": [
-          {
-            "components": [
-              {"internalType": "string", "name": "encryptedData", "type": "string"},
-              {"internalType": "uint256", "name": "timestamp", "type": "uint256"}
-            ],
-            "internalType": "struct PatientRecords.Record[]",
-            "name": "",
-            "type": "tuple[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      }
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"_encryptedData","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"getRecords","outputs":[{"components":[{"internalType":"string","name":"encryptedData","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct PatientRecords.Record[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
     ];
-
-    // গ্লোবাল ভ্যারিয়েবল
     let provider = null;
     let signer = null;
     let contract = null;
     let userAddress = null;
     let chartInstance = null;
-
-    // এনক্রিপশন কী (টেস্টের জন্য ফিক্সড - পরে পরিবর্তন করো)
-    const ENCRYPTION_KEY = "YourSecretKey123!@#";
-
-    // ========================================
-    //          হেল্পার ফাংশন
-    // ========================================
+    // CryptoJS এনক্রিপশন কী (টেস্টের জন্য ফিক্সড, পরে ইউজার-স্পেসিফিক করা যাবে)
+    const ENCRYPTION_KEY = "YourSecretKey123!@#"; // পরে পরিবর্তন করো
     function encryptData(data) {
       return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
     }
-
     function decryptData(ciphertext) {
       const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
       return bytes.toString(CryptoJS.enc.Utf8);
     }
-
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -244,42 +164,32 @@
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
     }
-
-    // ========================================
-    //          ওয়ালেট কানেকশন
-    // ========================================
     async function connectWallet() {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
-
       if (!window.ethereum) {
         status.innerText = "কোনো ওয়ালেট পাওয়া যায়নি!";
         addMessage("MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।");
         return;
       }
-
       try {
         provider = new ethers.BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
-
         const network = await provider.getNetwork();
         if (Number(network.chainId) !== 5042002) {
           status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
           addMessage("Arc Testnet-এ সুইচ করুন!");
           return;
         }
-
         contract = new ethers.Contract(contractAddress, abi, signer);
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-
         addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:
 • রেকর্ড দেখাও / আমার হিস্ট্রি
 • অ্যাড করো: [ডাটা]
 • আমার ওষুধ কী কী?
 • নতুন ডাটা যোগ করো`);
-
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
@@ -288,48 +198,34 @@
         addMessage("কানেক্ট করতে সমস্যা: " + error.message);
       }
     }
-
     function disconnectWallet() {
       provider = null;
       signer = null;
       contract = null;
       userAddress = null;
-
       document.getElementById("status").innerText = "Status: Disconnected";
       document.getElementById("connectBtn").style.display = "block";
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
-
       addMessage("আপনি লগআউট / ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
-
       if (chartInstance) {
         chartInstance.destroy();
         chartInstance = null;
       }
     }
-
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
-
-    // ========================================
-    //          মূল বাটন হ্যান্ডলার
-    // ========================================
     document.getElementById("sendBtn").onclick = async () => {
       const input = document.getElementById("userInput");
       const text = input.value.trim();
       if (!text) return;
-
       addMessage(text, true);
       input.value = "";
-
       if (!contract) {
         addMessage("প্রথমে ওয়ালেট কানেক্ট করুন!");
         return;
       }
-
       const lower = text.toLowerCase();
-
-      // রেকর্ড দেখার কমান্ড
       if (
         lower.includes("দেখাও") ||
         lower.includes("রেকর্ড") ||
@@ -348,51 +244,39 @@
           const records = await contract.getRecords(userAddress);
           let reply = "আপনার রেকর্ড:\n\n";
           let medicines = [];
-
           if (records.length === 0) {
             reply += "কোনো রেকর্ড পাওয়া যায়নি।";
           } else {
             records.forEach((rec, i) => {
               const data = rec.encryptedData;
               reply += `রেকর্ড ${i+1}: ${data} (${new Date(Number(rec.timestamp)*1000).toLocaleString()})\n`;
-
-              if (
-                data.toLowerCase().includes("medicine") ||
-                data.toLowerCase().includes("ওষুধ") ||
-                data.toLowerCase().includes("paracetamol") ||
-                data.toLowerCase().includes("aspirin")
-              ) {
+              if (data.toLowerCase().includes("medicine") || data.toLowerCase().includes("ওষুধ") || data.toLowerCase().includes("paracetamol") || data.toLowerCase().includes("aspirin")) {
                 medicines.push(data);
               }
             });
-
             if (medicines.length > 0) {
               reply += "\nআপনার ওষুধের লিস্ট:\n" + medicines.join("\n");
             }
           }
-
           addMessage(reply);
           updateChart(records);
-
-          // Grok AI-এর কাছে পরামর্শ চাওয়া
+          // Grok AI-এর কাছে পরামর্শ চাওয়া (আগের মতোই)
           if (records.length > 0) {
             try {
-              const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
+              const response = await fetch('https://your-vercel-project-name.vercel.app/api', {  // ← এখানে তোমার Vercel-এ deploy করা API URL দাও
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   records: records.map(r => ({
-                    encryptedData: r.encryptedData,
-                    timestamp: r.timestamp.toString()
+                    encryptedData: r.encryptedData || "",
+                    timestamp: r.timestamp ? r.timestamp.toString() : "0"  // সেফ চেক যোগ করা হয়েছে
                   })),
                   userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য জানা না থাকলে সাধারণ পরামর্শ দিও।"
                 })
               });
-
               if (!response.ok) {
                 throw new Error(`API error: ${response.status}`);
               }
-
               const data = await response.json();
               if (data.advice) {
                 addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice);
@@ -407,8 +291,6 @@
           addMessage("রেকর্ড লোড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
-
-      // রেকর্ড যোগ করার কমান্ড
       else if (
         lower.includes("অ্যাড") ||
         lower.includes("add") ||
@@ -421,25 +303,21 @@
       ) {
         let data = text;
         const keywords = ["অ্যাড করো", "add", "যোগ করো", "নতুন", "এন্ট্রি", "সেভ করো", "রেকর্ড করো"];
-
         for (const kw of keywords) {
           if (lower.includes(kw)) {
             data = text.split(kw)[1]?.trim() || text;
             break;
           }
         }
-
         if (text.includes(":")) {
           data = text.split(":").slice(1).join(":").trim();
         }
-
         if (!data || data.length < 3) {
           addMessage("ডাটা লিখুন। উদাহরণ:\nঅ্যাড করো: Fever 2025-02-10\nনতুন: BP 120/80");
           return;
         }
-
+        // সিম্পল এনক্রিপশন (পরে IPFS যোগ করা যাবে)
         const encrypted = encryptData(data);
-
         try {
           const tx = await contract.addRecord(userAddress, encrypted);
           addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
@@ -449,18 +327,13 @@
           addMessage("অ্যাড করতে সমস্যা: " + (error.reason || error.message));
         }
       }
-
-      // হাই / হ্যালো
       else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
       }
-
-      // অন্য কিছু
       else {
         addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি / ওষুধ কী কী\n• অ্যাড করো: [ডাটা] / নতুন রেকর্ড\n• হাই / হ্যালো");
       }
     };
-
     function updateChart(records) {
       const ctx = document.getElementById("recordChart").getContext("2d");
       if (chartInstance) chartInstance.destroy();
@@ -473,13 +346,12 @@
       const timestamps = records.map(rec => Number(rec.timestamp));
       const colors = records.map(rec => {
         const data = rec.encryptedData.toLowerCase();
-        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c";
-        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12";
-        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60";
-        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad";
-        return "#3498db";
+        if (data.includes("fever") || data.includes("জ্বর")) return "#e74c3c"; // লাল
+        if (data.includes("bp") || data.includes("pressure") || data.includes("রক্তচাপ")) return "#f39c12"; // কমলা
+        if (data.includes("diabetes") || data.includes("ডায়াবেটিস")) return "#27ae60"; // সবুজ
+        if (data.includes("medicine") || data.includes("ওষুধ") || data.includes("paracetamol") || data.includes("aspirin")) return "#8e44ad"; // বেগুনি
+        return "#3498db"; // ডিফল্ট নীল
       });
-
       chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
