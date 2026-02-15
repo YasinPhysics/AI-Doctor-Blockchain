@@ -8,6 +8,7 @@
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="ai-advice.js"></script>
 
   <style>
     :root {
@@ -553,45 +554,78 @@
         return;
       }
 
-      // সাধারণ কমান্ড
-      if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
-        try {
-          const c = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-          const records = await c.getAllDiseaseRecords(userAddress);
+     if (
+  lower.includes("রেকর্ড দেখাও") ||
+  lower.includes("হিস্ট্রি") ||
+  lower.includes("record") ||
+  lower.includes("history")
+) {
+  try {
+    const c = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    const records = await c.getAllDiseaseRecords(userAddress);
+    let reply = "আপনার রেকর্ডসমূহ:\n\n";
 
-          let reply = "আপনার রেকর্ডসমূহ:\n\n";
-          if (records.length === 0) {
-            reply += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
-          } else {
-            records.forEach(disease => {
-              reply += `রোগ: ${disease.diseaseName}\n`;
-              disease.dailyRecords.forEach(r => {
-                const date = new Date(Number(r.timestamp) * 1000).toLocaleString("bn-BD");
-                reply += ` তারিখ: ${date}\n`;
-                reply += ` রিডিং: ${r.readingValue}\n`;
-                reply += ` বয়স: ${r.patientAgeAtRecord} বছর\n`;
-                reply += ` ওজন: ${r.patientWeightKg} kg   উচ্চতা: ${r.patientHeightCm} cm\n`;
-
-                if (r.medicines.length > 0) {
-                  reply += " ওষুধ:\n";
-                  r.medicines.forEach(m => {
-                    reply += ` • ${m.name} (${m.dose}, ${m.frequency}, ${m.durationDays} দিন)\n`;
-                  });
-                }
-
-                if (r.diseaseDetails) reply += ` বিস্তারিত: ${r.diseaseDetails}\n`;
-                reply += "\n";
-              });
+    if (records.length === 0) {
+      reply += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
+    } else {
+      records.forEach(disease => {
+        reply += `রোগ: ${disease.diseaseName}\n`;
+        disease.dailyRecords.forEach(r => {
+          const date = new Date(Number(r.timestamp) * 1000).toLocaleString("bn-BD");
+          reply += ` তারিখ: ${date}\n`;
+          reply += ` রিডিং: ${r.readingValue}\n`;
+          reply += ` বয়স: ${r.patientAgeAtRecord} বছর\n`;
+          reply += ` ওজন: ${r.patientWeightKg} kg উচ্চতা: ${r.patientHeightCm} cm\n`;
+          if (r.medicines.length > 0) {
+            reply += " ওষুধ:\n";
+            r.medicines.forEach(m => {
+              reply += ` • ${m.name} (${m.dose}, ${m.frequency}, ${m.durationDays} দিন)\n`;
             });
           }
+          if (r.diseaseDetails) reply += ` বিস্তারিত: ${r.diseaseDetails}\n`;
+          reply += "\n";
+        });
+      });
+    }
 
-          addMessage(reply);
-          updateChart(records);
-        } catch (err) {
-          addMessage("রেকর্ড দেখাতে সমস্যা: " + (err.message || "Unknown error"));
+    addMessage(reply);
+    updateChart(records);
+
+    // AI পরামর্শ আনা (এখানেই যোগ করো)
+    if (records.length > 0) {
+      try {
+        const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            records: records.map(r => ({
+              encryptedData: r.encryptedData,
+              timestamp: r.timestamp.toString()
+            })),
+            userMessage: "এই রেকর্ড দেখে আমার জন্য সহজ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য জানা না থাকলে সাধারণ পরামর্শ দিও।"
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
         }
-        return;
+
+        const data = await response.json();
+        if (data.advice) {
+          addMessage("AI ডাক্তারের পরামর্শ:\n" + data.advice);
+        } else {
+          addMessage("AI থেকে পরামর্শ পাওয়া যায়নি।");
+        }
+      } catch (err) {
+        addMessage("AI কানেকশন সমস্যা: " + err.message);
       }
+    }
+
+  } catch (err) {
+    addMessage("রেকর্ড দেখাতে সমস্যা: " + (err.message || "Unknown error"));
+  }
+  return;
+}
 
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
