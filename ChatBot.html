@@ -273,13 +273,16 @@
     async function checkProfiles() {
       try {
         const fixed = await contract.getFixedProfile(userAddress);
-        
+        console.log("getFixedProfile returned:", fixed);
+
         if (fixed.dateOfBirth !== 0n && fixed.dateOfBirth !== BigInt(0)) {
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
 
           try {
             const profile = await contract.getPatientProfile(userAddress);
+            console.log("getPatientProfile returned:", profile);
+
             if (profile.weightKg > 0n && profile.heightCm > 0n) {
               addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
               updatableProfileStep = -1;
@@ -289,11 +292,13 @@
               askUpdatableProfile();
             }
           } catch (profileErr) {
-            if ((profileErr.reason || profileErr.message || "").includes("Profile not set")) {
+            const errMsg = (profileErr.reason || profileErr.message || "").toLowerCase();
+            if (errMsg.includes("profile not set") || errMsg.includes("fixed profile not set")) {
               addMessage("আপনার ওজন, উচ্চতা, অ্যালার্জি ইত্যাদি এখনো সেট করা হয়নি। চলুন সেট করি।");
               updatableProfileStep = 0;
               askUpdatableProfile();
             } else {
+              console.error("Unexpected getPatientProfile error:", profileErr);
               addMessage("প্রোফাইল চেক করতে অপ্রত্যাশিত সমস্যা: " + (profileErr.message || "Unknown error"));
               updatableProfileStep = -1;
             }
@@ -304,9 +309,17 @@
           askFixedProfile();
         }
       } catch (err) {
-        console.error("checkProfiles error:", err);
-        addMessage("প্রোফাইল চেক করতে সমস্যা: " + (err.message || "Unknown error"));
-        fixedProfileStep = -1;
+        const errMsg = (err.reason || err.message || "").toLowerCase();
+        if (errMsg.includes("fixed profile not set") || errMsg.includes("profile not set")) {
+          console.log("Fixed profile not set (normal for new wallet)");
+          addMessage("আপনার ফিক্সড প্রোফাইল এখনো সেট করা হয়নি। চলুন সেট করি।");
+          fixedProfileStep = 0;
+          askFixedProfile();
+        } else {
+          console.error("checkProfiles unexpected error:", err);
+          addMessage("প্রোফাইল চেক করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন বা পরে আসুন।");
+          fixedProfileStep = -1;
+        }
       }
     }
 
@@ -408,7 +421,6 @@
       }
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল
       if (fixedProfileStep >= 0) {
         if (["skip", "নাই", ""].includes(lower)) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
@@ -454,7 +466,6 @@
         return;
       }
 
-      // আপডেটেবল প্রোফাইল
       if (updatableProfileStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         if (skipped && updatableProfileStep < 2) {
@@ -491,7 +502,7 @@
         return;
       }
 
-      // রেকর্ড অ্যাড — ফিক্স করা অংশ (হার্ডকোড selector)
+      // রেকর্ড অ্যাড (হার্ডকোড selector সহ)
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         switch (recordStep) {
@@ -517,9 +528,7 @@
               ]);
             }
 
-            // হার্ডকোড selector + AbiCoder (এটাই কাজ করছে)
             const functionSelector = "0xcaf5bb2c";
-
             const coder = new ethers.AbiCoder();
             const encodedParams = coder.encode(
               ["string", "string", "tuple(string,string,string,uint256)[]", "string", "string"],
@@ -531,7 +540,6 @@
                 recordData.diseaseDetails || ""
               ]
             );
-
             const calldata = functionSelector + encodedParams.slice(2);
 
             addMessage(`রেকর্ড অ্যাড হচ্ছে... (selector: ${functionSelector})`);
@@ -547,7 +555,7 @@
             recordStep = -1;
           } catch (err) {
             console.error("Raw addDailyRecord error:", err);
-            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || "Unknown error - check console for details"));
+            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || "Unknown error - console দেখুন"));
             recordStep = -1;
           }
         } else {
@@ -556,7 +564,7 @@
         return;
       }
 
-      // রেকর্ড দেখাও
+      // রেকর্ড দেখাও + AI + গ্রাফ
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
@@ -603,7 +611,6 @@
         return;
       }
 
-      // গ্রাফ দেখা
       if (waitingForDiseaseGraph) {
         const requestedDisease = text.trim().toLowerCase();
         if (allDiseases.some(d => d.toLowerCase() === requestedDisease)) {
@@ -657,7 +664,6 @@
         return;
       }
 
-      // নতুন রেকর্ড শুরু
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
         recordData = {};
@@ -666,7 +672,6 @@
         return;
       }
 
-      // হাই/হ্যালো
       if (["হাই", "হ্যালো", "কেমন আছো", "হেলো"].some(w => lower.includes(w))) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার স্বাস্থ্য নিয়ে কী করতে চান?");
         return;
