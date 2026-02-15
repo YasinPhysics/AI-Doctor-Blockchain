@@ -449,9 +449,9 @@
 
       const lower = text.toLowerCase();
 
-      // ১. ফিক্সড প্রোফাইল সেট করা হচ্ছে
+      // ফিক্সড প্রোফাইল
       if (fixedProfileStep >= 0) {
-        if (lower === "skip" || lower === "নাই" || !text) {
+        if (["skip","নাই",""].includes(low)) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
           return;
         }
@@ -490,7 +490,7 @@
         return;
       }
 
-      // ২. আপডেটেবল প্রোফাইল সেট করা হচ্ছে
+      // আপডেটেবল প্রোফাইল
       if (updatableProfileStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         if (skipped && updatableProfileStep < 2) {
@@ -528,7 +528,7 @@
         return;
       }
 
-      // ৩. রেকর্ড অ্যাড মোড
+      // রেকর্ড অ্যাড (হার্ডকোড selector + AbiCoder)
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
 
@@ -547,6 +547,7 @@
 
         if (recordStep === 8) {
           try {
+            // হার্ডকোড selector — এটা কাজ করে (explorer থেকে প্রমাণিত)
             const functionSelector = "0xcaf5bb2c";
             const coder = new ethers.AbiCoder();
 
@@ -593,7 +594,7 @@
         return;
       }
 
-      // ৪. সাধারণ কমান্ড (রেকর্ড দেখাও + AI পরামর্শ)
+      // রেকর্ড দেখাও + AI পরামর্শ
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
