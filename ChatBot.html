@@ -491,7 +491,7 @@
         return;
       }
 
-      // রেকর্ড অ্যাড — এখানে ফিক্স করা অংশ
+      // রেকর্ড অ্যাড — ফিক্স করা অংশ (হার্ডকোড selector)
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         switch (recordStep) {
@@ -517,17 +517,24 @@
               ]);
             }
 
-            // raw calldata তৈরি (ফিক্স করা অংশ)
-            const iface = new ethers.Interface(ABI);
-            const calldata = iface.encodeFunctionData("addDailyRecord", [
-              recordData.diseaseName || "",
-              recordData.readingValue || "",
-              medicines,
-              recordData.ipfsCid || "",
-              recordData.diseaseDetails || ""
-            ]);
+            // হার্ডকোড selector + AbiCoder (এটাই কাজ করছে)
+            const functionSelector = "0xcaf5bb2c";
 
-            addMessage(`রেকর্ড অ্যাড হচ্ছে... (raw calldata)`);
+            const coder = new ethers.AbiCoder();
+            const encodedParams = coder.encode(
+              ["string", "string", "tuple(string,string,string,uint256)[]", "string", "string"],
+              [
+                recordData.diseaseName || "",
+                recordData.readingValue || "",
+                medicines,
+                recordData.ipfsCid || "",
+                recordData.diseaseDetails || ""
+              ]
+            );
+
+            const calldata = functionSelector + encodedParams.slice(2);
+
+            addMessage(`রেকর্ড অ্যাড হচ্ছে... (selector: ${functionSelector})`);
 
             const tx = await signer.sendTransaction({
               to: CONTRACT_ADDRESS,
@@ -535,12 +542,12 @@
             });
 
             addMessage(`Tx পাঠানো হয়েছে: ${tx.hash.slice(0,10)}...`);
-            await tx.wait();
+            await tx.wait(1);
             addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
             recordStep = -1;
           } catch (err) {
-            console.error("addDailyRecord error:", err);
-            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || JSON.stringify(err)));
+            console.error("Raw addDailyRecord error:", err);
+            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || "Unknown error - check console for details"));
             recordStep = -1;
           }
         } else {
@@ -549,7 +556,7 @@
         return;
       }
 
-      // রেকর্ড দেখাও + AI + গ্রাফ
+      // রেকর্ড দেখাও
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
@@ -596,7 +603,7 @@
         return;
       }
 
-      // গ্রাফ
+      // গ্রাফ দেখা
       if (waitingForDiseaseGraph) {
         const requestedDisease = text.trim().toLowerCase();
         if (allDiseases.some(d => d.toLowerCase() === requestedDisease)) {
@@ -650,7 +657,7 @@
         return;
       }
 
-      // নতুন রেকর্ড
+      // নতুন রেকর্ড শুরু
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
         recordData = {};
