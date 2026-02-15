@@ -247,12 +247,12 @@
     // ========================================
     //          UI হেল্পার ফাংশন
     // ========================================
-    function addMessage(text, isUser = false, isAI = false) {
+    function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
-      const msg = document.createElement("div");
-      msg.className = `message ${isUser ? "user" : isAI ? "ai" : "bot"}`;
-      msg.textContent = text;
-      chatBody.appendChild(msg);
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `message ${isUser ? "user" : "bot"}`;
+      msgDiv.innerHTML = text;  // HTML allowed for better formatting
+      chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
@@ -286,7 +286,7 @@
 
         contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
         updateStatus(`কানেক্টেড: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
-        addMessage("স্বাগতম! এখন আপনি বলতে পারেন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি\n• অ্যাড করো / নতুন রেকর্ড");
+        addMessage("স্বাগতম! এখন আপনি বলতে পারেন:<br>• রেকর্ড দেখাও / আমার হিস্ট্রি<br>• অ্যাড করো / নতুন রেকর্ড");
 
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
@@ -296,7 +296,7 @@
         await checkProfiles();
       } catch (err) {
         updateStatus("কানেক্ট করতে সমস্যা");
-        addMessage("কানেক্ট করতে সমস্যা: " + (err.message || "Unknown error"));
+        addMessage("কানেক্ট করতে সমস্যা: " + (err.reason || err.message || "Unknown error"));
       }
     }
 
@@ -325,7 +325,6 @@
         if (fixed.dateOfBirth !== 0n) {
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
-
           const profile = await contract.getPatientProfile(userAddress);
           if (profile.weightKg > 0n && profile.heightCm > 0n) {
             addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
@@ -347,7 +346,7 @@
     }
 
     // ========================================
-    //          ফিক্সড প্রোফাইল স্টেপ
+    //          ফিক্সড প্রোফাইল প্রশ্ন
     // ========================================
     function askFixedProfile() {
       const questions = [
@@ -359,7 +358,7 @@
     }
 
     // ========================================
-    //          আপডেটেবল প্রোফাইল স্টেপ
+    //          আপডেটেবল প্রোফাইল প্রশ্ন
     // ========================================
     function askUpdatableProfile() {
       const questions = [
@@ -372,7 +371,7 @@
     }
 
     // ========================================
-    //          রেকর্ড অ্যাড স্টেপ
+    //          রেকর্ড অ্যাড প্রশ্ন
     // ========================================
     function askRecord() {
       const questions = [
@@ -389,6 +388,49 @@
     }
 
     // ========================================
+    //          AI পরামর্শ ফাংশন (আগের মতোই)
+    // ========================================
+    async function getAIAdvice(records) {
+      if (records.length === 0) return;
+
+      try {
+        addMessage("AI বন্ধুকে তোমার রেকর্ড দেখাচ্ছি... একটু অপেক্ষা করো।");
+
+        const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            records: records.map(r => ({
+              diseaseName: r.diseaseName,
+              dailyRecords: r.dailyRecords.map(dr => ({
+                readingValue: dr.readingValue,
+                timestamp: dr.timestamp.toString(),
+                medicines: dr.medicines,
+                diseaseDetails: dr.diseaseDetails
+              }))
+            })),
+            userMessage: "এই রেকর্ডগুলো দেখে আমার জন্য সহজ ও সাধারণ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য না জানলে জেনারেল টিপস দিও। কোনো ওষুধ বা চিকিৎসা সাজেশন দেবে না।"
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.advice && data.advice.trim()) {
+          addMessage("AI ডাক্তারের পরামর্শ:\n\n" + data.advice);
+        } else {
+          addMessage("AI থেকে কোনো পরামর্শ পাওয়া যায়নি।");
+        }
+      } catch (err) {
+        console.error("AI fetch error:", err);
+        addMessage("AI কানেকশন সমস্যা: " + (err.message || "Unknown error"));
+      }
+    }
+
+    // ========================================
     //          মূল ইনপুট হ্যান্ডলার
     // ========================================
     document.getElementById("sendBtn").onclick = async () => {
@@ -399,16 +441,16 @@
       addMessage(text, true);
       input.value = "";
 
-      if (!contract) {
+      if (!signer) {
         addMessage("প্রথমে ওয়ালেট কানেক্ট করুন।");
         return;
       }
 
       const lower = text.toLowerCase();
 
-      // ১. ফিক্সড প্রোফাইল সেট করা হচ্ছে
+      // ফিক্সড প্রোফাইল
       if (fixedProfileStep >= 0) {
-        if (lower === "skip" || lower === "নাই" || !text) {
+        if (["skip","নাই",""].includes(low)) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
           return;
         }
@@ -436,9 +478,9 @@
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সফলভাবে সেট হয়েছে!");
             fixedProfileStep = -1;
-            checkProfiles();
+            await checkProfiles();
           } catch (err) {
-            addMessage("সমস্যা: " + (err.reason || err.message));
+            addMessage("সমস্যা: " + (err.reason || err.message || "Unknown error"));
             fixedProfileStep = -1;
           }
         } else {
@@ -447,10 +489,9 @@
         return;
       }
 
-      // ২. আপডেটেবল প্রোফাইল সেট করা হচ্ছে
+      // আপডেটেবল প্রোফাইল
       if (updatableProfileStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
-
         if (skipped && updatableProfileStep < 2) {
           addMessage("ওজন ও উচ্চতা স্কিপ করা যাবে না।");
           return;
@@ -477,7 +518,7 @@
             addMessage("প্রোফাইল সফলভাবে আপডেট হয়েছে! এখন রেকর্ড যোগ করতে পারেন।");
             updatableProfileStep = -1;
           } catch (err) {
-            addMessage("সমস্যা: " + (err.reason || err.message));
+            addMessage("সমস্যা: " + (err.reason || err.message || "Unknown error"));
             updatableProfileStep = -1;
           }
         } else {
@@ -486,7 +527,7 @@
         return;
       }
 
-      // ৩. রেকর্ড অ্যাড মোড
+      // রেকর্ড অ্যাড
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
 
@@ -506,7 +547,6 @@
         if (recordStep === 8) {
           try {
             const medicines = [];
-
             if (recordData.medicineName && recordData.medicineName.trim()) {
               medicines.push([
                 recordData.medicineName.trim(),
@@ -545,45 +585,83 @@
         return;
       }
 
-      // ৪. সাধারণ কমান্ড
+      // রেকর্ড দেখাও + AI পরামর্শ
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
-          let msg = "আপনার রেকর্ডসমূহ:\n\n";
+          let reply = "আপনার রেকর্ডসমূহ:\n\n";
 
           if (records.length === 0) {
-            msg += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
+            reply += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
           } else {
             records.forEach(disease => {
-              msg += `রোগ: ${disease.diseaseName}\n`;
+              reply += `রোগ: ${disease.diseaseName}\n`;
               disease.dailyRecords.forEach(r => {
                 const date = new Date(Number(r.timestamp) * 1000).toLocaleString("bn-BD");
-                msg += `  তারিখ: ${date}\n`;
-                msg += `  রিডিং: ${r.readingValue}\n`;
-                msg += `  বয়স: ${r.patientAgeAtRecord} বছর\n`;
-                msg += `  ওজন: ${r.patientWeightKg} kg   উচ্চতা: ${r.patientHeightCm} cm\n`;
+                reply += ` তারিখ: ${date}\n`;
+                reply += ` রিডিং: ${r.readingValue}\n`;
+                reply += ` বয়স: ${r.patientAgeAtRecord} বছর\n`;
+                reply += ` ওজন: ${r.patientWeightKg} kg   উচ্চতা: ${r.patientHeightCm} cm\n`;
 
                 if (r.medicines.length > 0) {
-                  msg += "  ওষুধ:\n";
+                  reply += " ওষুধ:\n";
                   r.medicines.forEach(m => {
-                    msg += `    • ${m.name} (${m.dose}, ${m.frequency}, ${m.durationDays} দিন)\n`;
+                    reply += ` • ${m.name} (${m.dose}, ${m.frequency}, ${m.durationDays} দিন)\n`;
                   });
                 }
 
-                if (r.diseaseDetails) msg += `  বিস্তারিত: ${r.diseaseDetails}\n`;
-                msg += "\n";
+                if (r.diseaseDetails) reply += ` বিস্তারিত: ${r.diseaseDetails}\n`;
+                reply += "\n";
               });
             });
           }
 
-          addMessage(msg);
+          addMessage(reply);
           updateChart(records);
+
+          // AI পরামর্শ যোগ করা হলো (এখানেই)
+          if (records.length > 0) {
+            try {
+              const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  records: records.map(r => ({
+                    diseaseName: r.diseaseName,
+                    dailyRecords: r.dailyRecords.map(dr => ({
+                      readingValue: dr.readingValue,
+                      timestamp: dr.timestamp.toString(),
+                      medicines: dr.medicines,
+                      diseaseDetails: dr.diseaseDetails
+                    }))
+                  })),
+                  userMessage: "এই রেকর্ডগুলো দেখে আমার জন্য সহজ ও সাধারণ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য না জানলে জেনারেল টিপস দিও। কোনো ওষুধ বা চিকিৎসা সাজেশন দেবে না।"
+                })
+              });
+
+              if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+              }
+
+              const data = await response.json();
+              if (data.advice && data.advice.trim()) {
+                addMessage("AI ডাক্তারের পরামর্শ:\n\n" + data.advice);
+              } else {
+                addMessage("AI থেকে কোনো পরামর্শ পাওয়া যায়নি।");
+              }
+            } catch (err) {
+              console.error("AI fetch error:", err);
+              addMessage("AI কানেকশন সমস্যা: " + (err.message || "Unknown error"));
+            }
+          }
+
         } catch (err) {
-          addMessage("রেকর্ড লোড করতে সমস্যা: " + (err.message || "Unknown"));
+          addMessage("রেকর্ড দেখাতে সমস্যা: " + (err.message || "Unknown error"));
         }
         return;
       }
 
+      // অ্যাড করো কমান্ড
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
         recordData = {};
@@ -592,6 +670,7 @@
         return;
       }
 
+      // হাই / হ্যালো
       if (["হাই", "হ্যালো", "কেমন আছো", "হেলো"].some(w => lower.includes(w))) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার স্বাস্থ্য নিয়ে কী করতে চান?");
         return;
@@ -617,9 +696,9 @@
       const labels = [];
       const data = [];
 
-      records.forEach(d => {
-        d.dailyRecords.forEach(r => {
-          labels.push(`${d.diseaseName} - ${new Date(Number(r.timestamp)*1000).toLocaleDateString("bn-BD")}`);
+      records.forEach(disease => {
+        disease.dailyRecords.forEach(r => {
+          labels.push(`${disease.diseaseName} - ${new Date(Number(r.timestamp)*1000).toLocaleDateString("bn-BD")}`);
           const val = parseFloat(r.readingValue?.split(" ")[0]) || 0;
           data.push(val);
         });
@@ -660,7 +739,6 @@
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
-    // এন্টার প্রেসে সেন্ড
     document.getElementById("userInput").addEventListener("keypress", e => {
       if (e.key === "Enter") document.getElementById("sendBtn").click();
     });
