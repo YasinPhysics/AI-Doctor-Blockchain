@@ -27,7 +27,7 @@ async function fetchAIAdvice(records = [], currentReading = "", currentDisease =
 
     addMessage("AI বন্ধুকে তোমার রেকর্ড দেখাচ্ছি... একটু অপেক্ষা করো।");
 
-    const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
+    const response = await fetch('https://ai-doctor-blockchain.vercel.app/api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
