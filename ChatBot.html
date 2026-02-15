@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI ডাক্তার -- রোগীর রেকর্ড চ্যাটবট</title>
+  <title>AI ডাক্তার - রোগীর রেকর্ড চ্যাটবট</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -206,6 +206,7 @@
     let allDiseases = [];
     let profileData = {};
     let recordData = {};
+    let currentMedicineStep = -1; // নতুন: একাধিক ওষুধের জন্য
 
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
@@ -215,6 +216,19 @@
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
       document.getElementById("userInput").focus();
+    }
+
+    function clearChat() {
+      const chatBody = document.getElementById("chat-body");
+      chatBody.innerHTML = '';
+      addMessage(`
+        হ্যালো! 👋 আমি তোমার AI ডাক্তার বন্ধু।<br><br>
+        আমি তোমার স্বাস্থ্য রেকর্ড নিরাপদে রাখতে সাহায্য করব।<br>
+        প্রথমে ওয়ালেট কানেক্ট করো, তারপর আমরা শুরু করব।<br><br>
+        তুমি যা করতে পারো:<br>
+        • রেকর্ড দেখাও / আমার হিস্ট্রি<br>
+        • অ্যাড করো / নতুন রেকর্ড যোগ করো
+      `);
     }
 
     function updateStatus(text) {
@@ -258,12 +272,16 @@
       fixedProfileStep = updatableProfileStep = recordStep = -1;
       waitingForDiseaseGraph = false;
       allDiseases = [];
+      currentMedicineStep = -1;
+      profileData = {};
+      recordData = {};
       updateStatus("সংযুক্ত নয়");
       document.getElementById("connectBtn").style.display = "inline-block";
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
       document.getElementById("userInput").disabled = true;
-      addMessage("আপনি ডিসকানেক্ট হয়েছেন। আবার কানেক্ট করুন।");
+      clearChat(); // লগআউট করলে চ্যাট ক্লিয়ার
+      addMessage("আপনি লগআউট করেছেন। চ্যাট রিসেট হয়েছে। আবার কানেক্ট করুন।");
       if (chartInstance) {
         chartInstance.destroy();
         chartInstance = null;
@@ -273,16 +291,13 @@
     async function checkProfiles() {
       try {
         const fixed = await contract.getFixedProfile(userAddress);
-        console.log("getFixedProfile returned:", fixed);
-
+        
         if (fixed.dateOfBirth !== 0n && fixed.dateOfBirth !== BigInt(0)) {
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
 
           try {
             const profile = await contract.getPatientProfile(userAddress);
-            console.log("getPatientProfile returned:", profile);
-
             if (profile.weightKg > 0n && profile.heightCm > 0n) {
               addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
               updatableProfileStep = -1;
@@ -293,12 +308,11 @@
             }
           } catch (profileErr) {
             const errMsg = (profileErr.reason || profileErr.message || "").toLowerCase();
-            if (errMsg.includes("profile not set") || errMsg.includes("fixed profile not set")) {
+            if (errMsg.includes("profile not set")) {
               addMessage("আপনার ওজন, উচ্চতা, অ্যালার্জি ইত্যাদি এখনো সেট করা হয়নি। চলুন সেট করি।");
               updatableProfileStep = 0;
               askUpdatableProfile();
             } else {
-              console.error("Unexpected getPatientProfile error:", profileErr);
               addMessage("প্রোফাইল চেক করতে অপ্রত্যাশিত সমস্যা: " + (profileErr.message || "Unknown error"));
               updatableProfileStep = -1;
             }
@@ -311,13 +325,12 @@
       } catch (err) {
         const errMsg = (err.reason || err.message || "").toLowerCase();
         if (errMsg.includes("fixed profile not set") || errMsg.includes("profile not set")) {
-          console.log("Fixed profile not set (normal for new wallet)");
-          addMessage("আপনার ফিক্সড প্রোফাইল এখনো সেট করা হয়নি। চলুন সেট করি।");
+          addMessage("প্রথমে আপনার ফিক্সড প্রোফাইল সেট করতে হবে (জন্ম তারিখ, লিঙ্গ, ব্লাড গ্রুপ)।");
           fixedProfileStep = 0;
           askFixedProfile();
         } else {
-          console.error("checkProfiles unexpected error:", err);
-          addMessage("প্রোফাইল চেক করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন বা পরে আসুন।");
+          console.error("checkProfiles error:", err);
+          addMessage("প্রোফাইল চেক করতে সমস্যা: " + (err.message || "Unknown error"));
           fixedProfileStep = -1;
         }
       }
@@ -352,15 +365,23 @@
       const questions = [
         "রোগের নাম লিখুন (যেমন: ডায়াবেটিস, উচ্চ রক্তচাপ)",
         "রিডিং / মান লিখুন (যেমন: 180 mg/dL)",
-        "ওষুধের নাম লিখুন (যদি না থাকে তাহলে skip লিখুন)",
-        "ডোজ লিখুন (যেমন: 500mg, skip লিখতে পারেন)",
-        "কতবার খাবেন (যেমন: দিনে ২ বার, skip লিখতে পারেন)",
-        "কতদিন খাবেন (দিনের সংখ্যা, skip লিখতে পারেন)",
-        "রোগের বিস্তারিত বিবরণ / নোট (অপশনাল, skip লিখতে পারেন)",
-        "IPFS CID (যদি কোনো রিপোর্ট আপলোড করেন, অপশনাল)"
+        "প্রথম ওষুধের নাম লিখুন (না থাকলে skip লিখুন)"
       ];
       if (recordStep >= 0 && recordStep < questions.length) {
         addMessage(questions[recordStep]);
+        document.getElementById("userInput").focus();
+      }
+    }
+
+    function askMedicine() {
+      const questions = [
+        "ওষুধের নাম লিখুন",
+        "ডোজ লিখুন (যেমন: 500mg)",
+        "কতবার খাবেন (যেমন: দিনে ২ বার)",
+        "কতদিন খাবেন (দিনের সংখ্যা)"
+      ];
+      if (currentMedicineStep >= 0 && currentMedicineStep < questions.length) {
+        addMessage(questions[currentMedicineStep]);
         document.getElementById("userInput").focus();
       }
     }
@@ -421,6 +442,7 @@
       }
       const lower = text.toLowerCase();
 
+      // ফিক্সড প্রোফাইল
       if (fixedProfileStep >= 0) {
         if (["skip", "নাই", ""].includes(lower)) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
@@ -466,6 +488,7 @@
         return;
       }
 
+      // আপডেটেবল প্রোফাইল
       if (updatableProfileStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         if (skipped && updatableProfileStep < 2) {
@@ -502,66 +525,113 @@
         return;
       }
 
-      // রেকর্ড অ্যাড (হার্ডকোড selector সহ)
-      if (recordStep >= 0) {
-        const skipped = ["skip", "নাই", ""].includes(lower);
-        switch (recordStep) {
-          case 0: recordData.diseaseName = text.trim() || ""; break;
-          case 1: recordData.readingValue = text.trim() || ""; break;
-          case 2: recordData.medicineName = skipped ? "" : text.trim(); break;
-          case 3: recordData.dose = skipped ? "" : text.trim(); break;
-          case 4: recordData.frequency = skipped ? "" : text.trim(); break;
-          case 5: recordData.durationDays = skipped ? 0 : (parseInt(text) || 0); break;
-          case 6: recordData.diseaseDetails = skipped ? "" : text.trim(); break;
-          case 7: recordData.ipfsCid = skipped ? "" : text.trim(); break;
-        }
-        recordStep++;
-        if (recordStep === 8) {
-          try {
-            const medicines = [];
-            if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
-              medicines.push([
-                recordData.medicineName.trim(),
-                recordData.dose || "",
-                recordData.frequency || "",
-                BigInt(recordData.durationDays || 0)
-              ]);
-            }
-
-            const functionSelector = "0xcaf5bb2c";
-            const coder = new ethers.AbiCoder();
-            const encodedParams = coder.encode(
-              ["string", "string", "tuple(string,string,string,uint256)[]", "string", "string"],
-              [
-                recordData.diseaseName || "",
-                recordData.readingValue || "",
-                medicines,
-                recordData.ipfsCid || "",
-                recordData.diseaseDetails || ""
-              ]
-            );
-            const calldata = functionSelector + encodedParams.slice(2);
-
-            addMessage(`রেকর্ড অ্যাড হচ্ছে... (selector: ${functionSelector})`);
-
-            const tx = await signer.sendTransaction({
-              to: CONTRACT_ADDRESS,
-              data: calldata
-            });
-
-            addMessage(`Tx পাঠানো হয়েছে: ${tx.hash.slice(0,10)}...`);
-            await tx.wait(1);
-            addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
-            recordStep = -1;
-          } catch (err) {
-            console.error("Raw addDailyRecord error:", err);
-            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || "Unknown error - console দেখুন"));
-            recordStep = -1;
+      // রেকর্ড অ্যাড — একাধিক ওষুধ সাপোর্ট সহ
+      if (recordStep >= 0 || currentMedicineStep >= 0) {
+        if (recordStep >= 0) {
+          const skipped = ["skip", "নাই", ""].includes(lower);
+          switch (recordStep) {
+            case 0: recordData.diseaseName = text.trim() || ""; break;
+            case 1: recordData.readingValue = text.trim() || ""; break;
+            case 2:
+              if (skipped) {
+                recordData.medicines = [];
+                recordStep = 6; // ওষুধ না দিলে সরাসরি বিস্তারিত অংশে
+                askRecord();
+              } else {
+                recordData.medicines = [];
+                recordData.tempMedicine = { name: text.trim() };
+                currentMedicineStep = 0;
+                askMedicine();
+              }
+              return;
           }
-        } else {
+          recordStep++;
+          if (recordStep === 2) return; // ওষুধের প্রশ্নে গেছে
+          if (recordStep === 6) {
+            addMessage("রোগের বিস্তারিত বিবরণ / নোট (অপশনাল, skip লিখতে পারেন)");
+            return;
+          }
+          if (recordStep === 7) {
+            addMessage("IPFS CID (যদি কোনো রিপোর্ট আপলোড করেন, অপশনাল, skip লিখতে পারেন)");
+            return;
+          }
+          if (recordStep === 8) {
+            try {
+              const medicines = recordData.medicines || [];
+              const functionSelector = "0xcaf5bb2c";
+              const coder = new ethers.AbiCoder();
+              const encodedParams = coder.encode(
+                ["string", "string", "tuple(string,string,string,uint256)[]", "string", "string"],
+                [
+                  recordData.diseaseName || "",
+                  recordData.readingValue || "",
+                  medicines,
+                  recordData.ipfsCid || "",
+                  recordData.diseaseDetails || ""
+                ]
+              );
+              const calldata = functionSelector + encodedParams.slice(2);
+
+              addMessage(`রেকর্ড অ্যাড হচ্ছে...`);
+              const tx = await signer.sendTransaction({
+                to: CONTRACT_ADDRESS,
+                data: calldata
+              });
+              addMessage(`Tx পাঠানো হয়েছে: ${tx.hash.slice(0,10)}...`);
+              await tx.wait(1);
+              addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
+              recordStep = -1;
+              currentMedicineStep = -1;
+              recordData = {};
+            } catch (err) {
+              console.error("Add record error:", err);
+              addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || "Unknown error"));
+              recordStep = -1;
+              currentMedicineStep = -1;
+            }
+            return;
+          }
           askRecord();
+          return;
         }
-        return;
+
+        // একাধিক ওষুধ লুপ
+        if (currentMedicineStep >= 0) {
+          switch (currentMedicineStep) {
+            case 0: recordData.tempMedicine.name = text.trim(); break;
+            case 1: recordData.tempMedicine.dose = text.trim(); break;
+            case 2: recordData.tempMedicine.frequency = text.trim(); break;
+            case 3:
+              recordData.tempMedicine.durationDays = parseInt(text) || 0;
+              recordData.medicines.push([
+                recordData.tempMedicine.name,
+                recordData.tempMedicine.dose || "",
+                recordData.tempMedicine.frequency || "",
+                BigInt(recordData.tempMedicine.durationDays || 0)
+              ]);
+              delete recordData.tempMedicine;
+              addMessage("আরেকটা ওষুধ যোগ করতে চান? (হ্যাঁ / না বা skip লিখুন)");
+              currentMedicineStep = -2; // বিশেষ স্টেপ: আরেকটা চাই কি না
+              return;
+          }
+          currentMedicineStep++;
+          askMedicine();
+          return;
+        }
+
+        // আরেকটা ওষুধ চাই কি না
+        if (currentMedicineStep === -2) {
+          if (["হ্যাঁ", "yes", "হ্যা", "আরেকটা"].some(w => lower.includes(w))) {
+            currentMedicineStep = 0;
+            addMessage("ঠিক আছে! পরের ওষুধের নাম লিখুন:");
+            askMedicine();
+          } else {
+            currentMedicineStep = -1;
+            recordStep = 6; // বিস্তারিত অংশে যাও
+            addMessage("রোগের বিস্তারিত বিবরণ / নোট (অপশনাল, skip লিখতে পারেন)");
+          }
+          return;
+        }
       }
 
       // রেকর্ড দেখাও + AI + গ্রাফ
@@ -611,6 +681,7 @@
         return;
       }
 
+      // গ্রাফ
       if (waitingForDiseaseGraph) {
         const requestedDisease = text.trim().toLowerCase();
         if (allDiseases.some(d => d.toLowerCase() === requestedDisease)) {
@@ -666,7 +737,8 @@
 
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
-        recordData = {};
+        recordData = { medicines: [] };
+        currentMedicineStep = -1;
         addMessage("ঠিক আছে! নতুন রেকর্ড যোগ করছি। প্রথমে রোগের নাম লিখুন:");
         askRecord();
         return;
@@ -682,23 +754,17 @@
 
     function updateChart(records) {
       const canvas = document.getElementById("recordChart");
-      if (!canvas) {
-        console.warn("recordChart canvas পাওয়া যায়নি");
-        return;
-      }
+      if (!canvas) return;
       if (chartInstance) chartInstance.destroy();
-
       if (!records || records.length === 0) {
         canvas.style.display = "none";
         return;
       }
-
       const diseaseCounts = {};
       records.forEach(d => {
         const name = d.diseaseName.trim();
         diseaseCounts[name] = (diseaseCounts[name] || 0) + d.dailyRecords.length;
       });
-
       canvas.style.display = "block";
       chartInstance = new Chart(canvas.getContext("2d"), {
         type: "pie",
@@ -707,7 +773,7 @@
           datasets: [{
             label: "রোগের রেকর্ড সংখ্যা",
             data: Object.values(diseaseCounts),
-            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
+            backgroundColor: ["#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40"],
             borderColor: "#fff",
             borderWidth: 2
           }]
