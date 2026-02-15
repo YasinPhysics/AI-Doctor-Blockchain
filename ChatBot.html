@@ -30,14 +30,13 @@
 </head>
 <body>
   <h1>AI Doctor - Patient Records Chatbot</h1>
-
   <div id="chat-container">
     <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
     <div id="chat-body">
-      <div class="message bot">হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।  
-ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।  
-উদাহরণ:  
-• রেকর্ড দেখাও / আমার হিস্ট্রি  
+      <div class="message bot">হ্যালো! 👋 আমি তোমার AI ডাক্তার চ্যাটবট।
+ওয়ালেট কানেক্ট করো, তারপর আমাকে বলো কী করতে চাও।
+উদাহরণ:
+• রেকর্ড দেখাও / আমার হিস্ট্রি
 • অ্যাড করো</div>
     </div>
     <div id="input-area">
@@ -45,19 +44,15 @@
       <button id="sendBtn">পাঠান</button>
     </div>
   </div>
-
   <div class="auth-buttons">
     <button id="connectBtn">ওয়ালেট কানেক্ট করুন (Arc Testnet)</button>
     <button id="logoutBtn">লগআউট / ডিসকানেক্ট</button>
   </div>
-
   <div id="status">Status: Not connected</div>
-
   <canvas id="recordChart" width="500" height="280"></canvas>
 
   <script>
     const contractAddress = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
-
     const abi = [
       {"inputs":[{"internalType":"uint256","name":"_dateOfBirth","type":"uint256"},{"internalType":"string","name":"_gender","type":"string"},{"internalType":"string","name":"_bloodGroup","type":"string"}],"name":"setFixedProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
       {"inputs":[{"internalType":"uint256","name":"_weightKg","type":"uint256"},{"internalType":"uint256","name":"_heightCm","type":"uint256"},{"internalType":"string[]","name":"_allergies","type":"string[]"},{"internalType":"string[]","name":"_chronicDiseases","type":"string[]"}],"name":"updateProfile","outputs":[],"stateMutability":"nonpayable","type":"function"},
@@ -96,62 +91,44 @@
     async function connectWallet() {
       const status = document.getElementById("status");
       status.innerText = "কানেক্ট হচ্ছে...";
-
       if (!window.ethereum) {
         status.innerText = "কোনো ওয়ালেট পাওয়া যায়নি!";
         addMessage("MetaMask বা অন্য ওয়ালেট ইনস্টল করুন।");
         return;
       }
-
       try {
         provider = new ethers.BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
-
         const network = await provider.getNetwork();
         if (Number(network.chainId) !== 5042002) {
           status.innerText = "Arc Testnet-এ সুইচ করুন (Chain ID: 5042002)";
           addMessage("Arc Testnet-এ সুইচ করুন!");
           return;
         }
-
         contract = new ethers.Contract(contractAddress, abi, signer);
-
         status.innerText = `কানেক্ট হয়েছে: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
-        addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:  
-• রেকর্ড দেখাও / আমার হিস্ট্রি  
+        addMessage(`স্বাগতম! এখন আপনি বলতে পারেন:
+• রেকর্ড দেখাও / আমার হিস্ট্রি
 • অ্যাড করো`);
-
         document.getElementById("connectBtn").style.display = "none";
         document.getElementById("logoutBtn").style.display = "inline-block";
         document.getElementById("sendBtn").disabled = false;
         document.getElementById("userInput").disabled = false;
 
         // Fixed profile চেক
-        let fixedProfile = null;
         try {
-          fixedProfile = await contract.getFixedProfile(userAddress);
-          console.log("getFixedProfile সফল হয়েছে:", fixedProfile);
+          const fixedProfile = await contract.getFixedProfile(userAddress);
           if (fixedProfile.dateOfBirth !== 0n) {
             addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট আছে।");
             fixedProfileSetupStep = -1;
 
-            // Updatable profile চেক
-            let profile = null;
-            try {
-              profile = await contract.getPatientProfile(userAddress);
-              console.log("getPatientProfile সফল হয়েছে:", profile);
-              if (profile.weightKg > 0n && profile.heightCm > 0n) {
-                addMessage("প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
-              } else {
-                addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
-                updatableProfileSetupStep = 0;
-                askForUpdatableProfile();
-              }
-            } catch (err) {
-              console.log("getPatientProfile এরর:", err.message);
-              addMessage("আপডেটযোগ্য প্রোফাইল চেক করতে সমস্যা। আসুন এগুলো দিন।");
+            const profile = await contract.getPatientProfile(userAddress);
+            if (profile.weightKg > 0n && profile.heightCm > 0n) {
+              addMessage("প্রোফাইল সম্পূর্ণ সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
+            } else {
+              addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
               updatableProfileSetupStep = 0;
               askForUpdatableProfile();
             }
@@ -159,8 +136,7 @@
             throw new Error("Fixed profile not set");
           }
         } catch (err) {
-          console.log("getFixedProfile এরর:", err.message);
-          addMessage("আপনার ফিক্সড প্রোফাইল (জন্ম তারিখ, লিঙ্গ, ব্লাড গ্রুপ) সেট করা হয়নি বা পড়তে সমস্যা হচ্ছে। আসুন প্রথমে এগুলো দিন।");
+          addMessage("আপনার ফিক্সড প্রোফাইল সেট করা হয়নি। আসুন প্রথমে জন্ম তারিখ, লিঙ্গ, ব্লাড গ্রুপ দিন।");
           fixedProfileSetupStep = 0;
           askForFixedProfile();
         }
@@ -178,15 +154,12 @@
       fixedProfileSetupStep = -1;
       updatableProfileSetupStep = -1;
       recordSetupStep = -1;
-
       document.getElementById("status").innerText = "Status: Disconnected";
       document.getElementById("connectBtn").style.display = "block";
       document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("sendBtn").disabled = true;
       document.getElementById("userInput").disabled = true;
-
       addMessage("আপনি লগআউট / ডিসকানেক্ট করেছেন। আবার কানেক্ট করুন।");
-
       if (chartInstance) {
         chartInstance.destroy();
         chartInstance = null;
@@ -203,7 +176,6 @@
         "আপনার লিঙ্গ লিখুন (Male/Female/Other)",
         "আপনার ব্লাড গ্রুপ লিখুন (যেমন A+, O-)"
       ];
-
       addMessage(steps[fixedProfileSetupStep]);
     }
 
@@ -215,7 +187,6 @@
         "আপনার অ্যালার্জি থাকলে লিখুন (কমা দিয়ে আলাদা, না থাকলে skip)",
         "আপনার দীর্ঘমেয়াদি রোগ থাকলে লিখুন (কমা দিয়ে আলাদা, না থাকলে skip)"
       ];
-
       addMessage(steps[updatableProfileSetupStep]);
     }
 
@@ -231,7 +202,6 @@
         "রোগের বিস্তারিত তথ্য/নোট লিখুন (অপশনাল, না থাকলে skip)",
         "IPFS CID থাকলে দিন (অপশনাল, না থাকলে skip)"
       ];
-
       addMessage(steps[recordSetupStep]);
     }
 
@@ -256,7 +226,6 @@
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
           return;
         }
-
         switch (fixedProfileSetupStep) {
           case 0:
             const [day, month, year] = text.split("-");
@@ -274,7 +243,6 @@
             profileData.bloodGroup = text;
             break;
         }
-
         fixedProfileSetupStep++;
         if (fixedProfileSetupStep === 3) {
           try {
@@ -286,24 +254,22 @@
             addMessage("ফিক্সড প্রোফাইল সেট হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সেট হয়েছে!");
-
             fixedProfileSetupStep = -1;
+
             try {
               const profile = await contract.getPatientProfile(userAddress);
               if (profile.weightKg > 0n && profile.heightCm > 0n) {
-                addMessage("আপডেটযোগ্য প্রোফাইল ইতিমধ্যে সেট আছে। এখন রেকর্ড অ্যাড করতে পারেন।");
+                addMessage("আপডেটযোগ্য প্রোফাইল ইতিমধ্যে সেট আছে।");
               } else {
-                addMessage("আপনার ওজন/উচ্চতা/অ্যালার্জি/দীর্ঘমেয়াদি রোগ সেট করা হয়নি। আসুন এগুলো দিন।");
                 updatableProfileSetupStep = 0;
                 askForUpdatableProfile();
               }
-            } catch (err) {
-              addMessage("আপডেটযোগ্য প্রোফাইল চেক করতে সমস্যা। আসুন এগুলো দিন।");
+            } catch {
               updatableProfileSetupStep = 0;
               askForUpdatableProfile();
             }
           } catch (err) {
-            addMessage("ফিক্সড প্রোফাইল সেট করতে সমস্যা: " + err.message);
+            addMessage("সমস্যা: " + (err.reason || err.message));
             fixedProfileSetupStep = -1;
           }
         } else {
@@ -314,47 +280,34 @@
 
       // Updatable profile setup mode
       if (updatableProfileSetupStep >= 0) {
-        if (lower === "skip" || lower === "নাই" || lower === "") {
-          if (updatableProfileSetupStep >= 2) {
-            profileData.allergies = updatableProfileSetupStep === 2 ? [] : profileData.allergies || [];
-            profileData.chronicDiseases = updatableProfileSetupStep === 3 ? [] : profileData.chronicDiseases || [];
-            updatableProfileSetupStep = 4;
-          } else {
-            addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
-            return;
-          }
-        } else {
-          switch (updatableProfileSetupStep) {
-            case 0:
-              profileData.weightKg = parseInt(text) || 0;
-              break;
-            case 1:
-              profileData.heightCm = parseInt(text) || 0;
-              break;
-            case 2:
-              profileData.allergies = text.split(",").map(a => a.trim()).filter(a => a);
-              break;
-            case 3:
-              profileData.chronicDiseases = text.split(",").map(a => a.trim()).filter(a => a);
-              break;
-          }
+        let skipped = (lower === "skip" || lower === "নাই" || lower === "");
+        if (skipped && updatableProfileSetupStep < 2) {
+          addMessage("ওজন ও উচ্চতা স্কিপ করা যাবে না।");
+          return;
+        }
+
+        switch (updatableProfileSetupStep) {
+          case 0: profileData.weightKg = parseInt(text) || 0; break;
+          case 1: profileData.heightCm = parseInt(text) || 0; break;
+          case 2: profileData.allergies = skipped ? [] : text.split(",").map(a => a.trim()).filter(a => a); break;
+          case 3: profileData.chronicDiseases = skipped ? [] : text.split(",").map(a => a.trim()).filter(a => a); break;
         }
 
         updatableProfileSetupStep++;
         if (updatableProfileSetupStep === 4) {
           try {
             const tx = await contract.updateProfile(
-              profileData.weightKg || 0,
-              profileData.heightCm || 0,
+              profileData.weightKg,
+              profileData.heightCm,
               profileData.allergies || [],
               profileData.chronicDiseases || []
             );
             addMessage("প্রোফাইল আপডেট হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
-            addMessage("প্রোফাইল সম্পূর্ণ সেট হয়েছে! এখন আপনি রেকর্ড অ্যাড করতে পারেন।");
+            addMessage("প্রোফাইল সেট হয়েছে! এখন রেকর্ড অ্যাড করতে পারেন।");
             updatableProfileSetupStep = -1;
           } catch (err) {
-            addMessage("প্রোফাইল আপডেট করতে সমস্যা: " + err.message);
+            addMessage("সমস্যা: " + (err.reason || err.message));
             updatableProfileSetupStep = -1;
           }
         } else {
@@ -365,81 +318,56 @@
 
       // Record setup mode
       if (recordSetupStep >= 0) {
-        if (lower === "skip" || lower === "নাই" || lower === "") {
-          if (recordSetupStep === 6 || recordSetupStep === 7) {
-            recordData.diseaseDetails = recordSetupStep === 6 ? "" : recordData.diseaseDetails || "";
-            recordData.ipfsCid = recordSetupStep === 7 ? "" : recordData.ipfsCid || "";
-            recordSetupStep = 8;
-          } else {
-            addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে তথ্য দিন।");
-            return;
-          }
-        } else {
-          switch (recordSetupStep) {
-            case 0:
-              recordData.diseaseName = text.trim() || "";
-              break;
-            case 1:
-              recordData.readingValue = text.trim() || "";
-              break;
-            case 2:
-              recordData.medicineName = text.trim();
-              break;
-            case 3:
-              recordData.dose = text.trim();
-              break;
-            case 4:
-              recordData.frequency = text.trim();
-              break;
-            case 5:
-              recordData.durationDays = parseInt(text) || 0;
-              break;
-            case 6:
-              recordData.diseaseDetails = text.trim();
-              break;
-            case 7:
-              recordData.ipfsCid = text.trim();
-              break;
-          }
+        let skipped = (lower === "skip" || lower === "নাই" || lower === "");
+
+        switch (recordSetupStep) {
+          case 0: recordData.diseaseName    = text.trim() || ""; break;
+          case 1: recordData.readingValue   = text.trim() || ""; break;
+          case 2: recordData.medicineName   = skipped ? "" : text.trim(); break;
+          case 3: recordData.dose           = skipped ? "" : text.trim(); break;
+          case 4: recordData.frequency      = skipped ? "" : text.trim(); break;
+          case 5: recordData.durationDays   = skipped ? 0 : (parseInt(text) || 0); break;
+          case 6: recordData.diseaseDetails = skipped ? "" : text.trim(); break;
+          case 7: recordData.ipfsCid        = skipped ? "" : text.trim(); break;
         }
 
         recordSetupStep++;
+
         if (recordSetupStep === 8) {
           try {
-            const medicines = [];
-            if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
-              medicines.push({
-                name: recordData.medicineName.trim(),
-                dose: recordData.dose && recordData.dose.trim() !== "" && recordData.dose.toLowerCase() !== "skip" ? recordData.dose.trim() : "",
-                frequency: recordData.frequency && recordData.frequency.trim() !== "" && recordData.frequency.toLowerCase() !== "skip" ? recordData.frequency.trim() : "",
-                durationDays: recordData.durationDays || 0
-              });
+            // ethers v6-এ struct[] পাঠানোর সঠিক ফরম্যাট
+            const medicinesArray = [];
+
+            if (recordData.medicineName && recordData.medicineName.toLowerCase() !== "skip") {
+              medicinesArray.push([
+                recordData.medicineName,
+                recordData.dose || "",
+                recordData.frequency || "",
+                BigInt(recordData.durationDays || 0)
+              ]);
             }
 
-            // লগ দেখার জন্য
-            console.log("=== addDailyRecord DEBUG ===");
-            console.log("diseaseName:", recordData.diseaseName || "N/A");
-            console.log("readingValue:", recordData.readingValue || "N/A");
-            console.log("medicines:", medicines);
-            console.log("medicines count:", medicines.length);
-            console.log("ipfsCid:", recordData.ipfsCid || "N/A");
-            console.log("diseaseDetails:", recordData.diseaseDetails || "N/A");
-            console.log("==============================");
+            console.log("Calling addDailyRecord with medicines:", medicinesArray);
 
             const tx = await contract.addDailyRecord(
               recordData.diseaseName || "",
               recordData.readingValue || "",
-              medicines,
+              medicinesArray,                     // ← এখানে [[string, string, string, bigint], ...]
               recordData.ipfsCid || "",
               recordData.diseaseDetails || ""
             );
+
             addMessage("রেকর্ড অ্যাড হচ্ছে... Tx: " + tx.hash);
             await tx.wait();
             addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
             recordSetupStep = -1;
           } catch (err) {
-            console.log("addDailyRecord ERROR:", err);
-            addMessage("রেকর্ড অ্যাড করতে সমস্যা: " + (err.reason || err.message || "Unknown error"));
+            console.error("addDailyRecord error:", err);
+            let msg = "রেকর্ড অ্যাড করতে সমস্যা";
+            if (err.reason) msg += ": " + err.reason;
+            else if (err.message) msg += ": " + err.message;
+            else if (err.code) msg += " (" + err.code + ")";
+            addMessage(msg);
             recordSetupStep = -1;
           }
         } else {
@@ -449,41 +377,36 @@
       }
 
       // Normal commands
-      if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি")) {
+      if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
-          console.log("getAllDiseaseRecords সফল হয়েছে:", records);
           let reply = "আপনার রেকর্ড:\n\n";
           if (records.length === 0) {
-            reply += "আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।";
+            reply += "এখনো কোনো রেকর্ড নেই।";
           } else {
             records.forEach(disease => {
               reply += `রোগ: ${disease.diseaseName}\n`;
               disease.dailyRecords.forEach(rec => {
-                const date = new Date(Number(rec.timestamp) * 1000).toLocaleString();
-                reply += `  তারিখ: ${date}\n`;
-                reply += `  রিডিং: ${rec.readingValue}\n`;
-                reply += `  বয়স: ${rec.patientAgeAtRecord} বছর\n`;
-                reply += `  ওজন: ${rec.patientWeightKg} kg\n`;
-                reply += `  উচ্চতা: ${rec.patientHeightCm} cm\n`;
+                const date = new Date(Number(rec.timestamp) * 1000).toLocaleString("bn-BD");
+                reply += ` তারিখ: ${date}\n`;
+                reply += ` রিডিং: ${rec.readingValue}\n`;
+                reply += ` বয়স: ${rec.patientAgeAtRecord} বছর\n`;
+                reply += ` ওজন: ${rec.patientWeightKg} kg   উচ্চতা: ${rec.patientHeightCm} cm\n`;
                 if (rec.medicines.length > 0) {
-                  reply += `  ওষুধ:\n`;
+                  reply += "ওষুধ:\n";
                   rec.medicines.forEach(med => {
-                    reply += `    - ${med.name} (${med.dose}, ${med.frequency}, ${med.durationDays} দিন)\n`;
+                    reply += ` • ${med.name} (${med.dose}, ${med.frequency}, ${med.durationDays} দিন)\n`;
                   });
                 }
-                if (rec.diseaseDetails) {
-                  reply += `  বিস্তারিত: ${rec.diseaseDetails}\n`;
-                }
+                if (rec.diseaseDetails) reply += `বিস্তারিত: ${rec.diseaseDetails}\n`;
                 reply += "\n";
               });
             });
           }
           addMessage(reply);
           updateChart(records);
-        } catch (error) {
-          console.log("getAllDiseaseRecords এরর:", error.message);
-          addMessage("আপনার এখনো কোনো রেকর্ড নেই। দয়া করে আপনার রেকর্ড যুক্ত করুন।");
+        } catch (err) {
+          addMessage("রেকর্ড দেখাতে সমস্যা: " + (err.message || "Unknown error"));
         }
       }
       else if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
@@ -492,17 +415,16 @@
         addMessage("ঠিক আছে! নতুন রেকর্ড অ্যাড করছি। প্রথমে রোগের নাম লিখুন:");
         askForRecord();
       }
-      else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো") || lower.includes("হেলো")) {
-        addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার রেকর্ড নিয়ে কী করতে চান?");
+      else if (lower.includes("হাই") || lower.includes("হ্যালো") || lower.includes("কেমন আছো")) {
+        addMessage("হ্যালো! 😊 আপনার স্বাস্থ্য রেকর্ড নিয়ে কী করতে চান?");
       }
       else {
-        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও / আমার হিস্ট্রি\n• অ্যাড করো\n• হাই / হ্যালো");
+        addMessage("আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো / নতুন রেকর্ড\n• হাই");
       }
     };
 
     function updateChart(records) {
       const ctx = document.getElementById("recordChart").getContext("2d");
-
       if (chartInstance) chartInstance.destroy();
 
       if (records.length === 0) {
@@ -517,34 +439,32 @@
 
       records.forEach(disease => {
         disease.dailyRecords.forEach(rec => {
-          labels.push(`${disease.diseaseName} - ${new Date(Number(rec.timestamp) * 1000).toLocaleDateString()}`);
-          const value = parseFloat(rec.readingValue.split(" ")[0]) || 0;
-          data.push(value);
+          labels.push(`${disease.diseaseName} - ${new Date(Number(rec.timestamp)*1000).toLocaleDateString("bn-BD")}`);
+          const val = parseFloat(rec.readingValue?.split(" ")[0]) || 0;
+          data.push(val);
         });
       });
 
       chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels,
           datasets: [{
             label: 'রিডিং মান',
-            data: data,
+            data,
             borderColor: '#009688',
             backgroundColor: 'rgba(0, 150, 136, 0.2)',
             fill: true,
-            tension: 0.4
+            tension: 0.3
           }]
         },
         options: {
           responsive: true,
           plugins: {
             legend: { display: true },
-            title: { display: true, text: 'রোগের রিডিং টাইমলাইন' }
+            title: { display: true, text: 'রোগের রিডিং ট্রেন্ড' }
           },
-          scales: {
-            y: { beginAtZero: true }
-          }
+          scales: { y: { beginAtZero: true } }
         }
       });
     }
