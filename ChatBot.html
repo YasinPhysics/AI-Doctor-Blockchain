@@ -8,7 +8,6 @@
   <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
   <style>
     :root {
@@ -214,9 +213,6 @@
   <canvas id="recordChart" width="600" height="300"></canvas>
 
   <script>
-    // ========================================
-    //          কনফিগারেশন
-    // ========================================
     const CONTRACT_ADDRESS = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
     const ARC_TESTNET_CHAIN_ID = 5042002;
 
@@ -242,9 +238,9 @@
     let profileData = {};
     let recordData = {};
 
-    // ========================================
-    //          UI হেল্পার ফাংশন
-    // ========================================
+    let waitingForDiseaseGraph = false; // গ্রাফের জন্য অপেক্ষা করছে কি না
+    let allDiseases = []; // সব রোগের লিস্ট সংরক্ষণ করার জন্য
+
     function addMessage(text, isUser = false) {
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
@@ -258,9 +254,6 @@
       document.getElementById("status").textContent = `স্ট্যাটাস: ${text}`;
     }
 
-    // ========================================
-    //          ওয়ালেট কানেকশন
-    // ========================================
     async function connectWallet() {
       if (!window.ethereum) {
         updateStatus("ওয়ালেট পাওয়া যায়নি");
@@ -301,6 +294,8 @@
     function disconnectWallet() {
       provider = signer = contract = userAddress = null;
       fixedProfileStep = updatableProfileStep = recordStep = -1;
+      waitingForDiseaseGraph = false;
+      allDiseases = [];
       updateStatus("সংযুক্ত নয়");
       document.getElementById("connectBtn").style.display = "inline-block";
       document.getElementById("logoutBtn").style.display = "none";
@@ -314,9 +309,6 @@
       }
     }
 
-    // ========================================
-    //          প্রোফাইল চেক ও সেটআপ
-    // ========================================
     async function checkProfiles() {
       try {
         const fixed = await contract.getFixedProfile(userAddress);
@@ -385,7 +377,6 @@
       try {
         addMessage("AI বন্ধুকে তোমার রেকর্ড দেখাচ্ছি... একটু অপেক্ষা করো।");
 
-        // BigInt → string কনভার্ট (JSON.stringify-এর জন্য)
         const serializableRecords = records.map(r => ({
           diseaseName: r.diseaseName,
           dailyRecords: r.dailyRecords.map(dr => ({
@@ -528,7 +519,7 @@
         return;
       }
 
-      // রেকর্ড অ্যাড (হার্ডকোড selector + AbiCoder)
+      // রেকর্ড অ্যাড
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
 
@@ -547,7 +538,6 @@
 
         if (recordStep === 8) {
           try {
-            // হার্ডকোড selector — এটা কাজ করে (explorer থেকে প্রমাণিত)
             const functionSelector = "0xcaf5bb2c";
             const coder = new ethers.AbiCoder();
 
@@ -594,7 +584,7 @@
         return;
       }
 
-      // রেকর্ড দেখাও + AI পরামর্শ
+      // রেকর্ড দেখাও + AI পরামর্শ + রোগের গ্রাফ চাওয়ার প্রশ্ন
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
@@ -603,6 +593,11 @@
           if (records.length === 0) {
             reply += "এখনো কোনো রেকর্ড যোগ করা হয়নি।";
           } else {
+            // সব রোগের নাম সংগ্রহ করা
+            allDiseases = [...new Set(records.map(r => r.diseaseName.trim()))];
+
+            reply += "আপনার রোগগুলো: " + allDiseases.join(", ") + "\n\n";
+
             records.forEach(disease => {
               reply += `রোগ: ${disease.diseaseName}\n`;
               disease.dailyRecords.forEach(r => {
@@ -628,13 +623,93 @@
           addMessage(reply);
           updateChart(records);
 
-          // AI পরামর্শ আনা
+          // AI পরামর্শ
           if (records.length > 0) {
             await getAIAdvice(records);
           }
+
+          // রোগের গ্রাফ চাওয়ার প্রশ্ন
+          if (records.length > 0 && allDiseases.length > 0) {
+            addMessage(
+              `আপনার রোগগুলোর মধ্যে কোনটার বিস্তারিত গ্রাফ দেখতে চান?<br>` +
+              `উদাহরণ: <b>${allDiseases.join("</b>, <b>")}</b><br>` +
+              `একটা রোগের নাম লিখুন।<br>` +
+              `(গ্রাফ না চাইলে অন্য কিছু লিখুন বা চুপ থাকুন)`
+            );
+            waitingForDiseaseGraph = true;
+          }
+
         } catch (err) {
           addMessage("রেকর্ড দেখাতে সমস্যা: " + (err.message || "Unknown error"));
         }
+        return;
+      }
+
+      // রোগের নাম দিলে স্পেসিফিক গ্রাফ বানানো
+      if (waitingForDiseaseGraph) {
+        const requestedDisease = text.trim().toLowerCase();
+
+        if (allDiseases.some(d => d.toLowerCase() === requestedDisease)) {
+          try {
+            const records = await contract.getAllDiseaseRecords(userAddress);
+
+            const filtered = records.filter(r => r.diseaseName.toLowerCase() === requestedDisease);
+
+            if (filtered.length === 0) {
+              addMessage(`"${text}" এর কোনো রেকর্ড পাওয়া যায়নি।`);
+            } else {
+              const labels = [];
+              const data = [];
+
+              filtered.forEach(disease => {
+                disease.dailyRecords.forEach(r => {
+                  const date = new Date(Number(r.timestamp) * 1000).toLocaleDateString("bn-BD");
+                  labels.push(date);
+                  const val = parseFloat(r.readingValue?.split(" ")[0]) || 0;
+                  data.push(val);
+                });
+              });
+
+              const ctx = document.getElementById("recordChart").getContext("2d");
+              if (chartInstance) chartInstance.destroy();
+
+              document.getElementById("recordChart").style.display = "block";
+
+              chartInstance = new Chart(ctx, {
+                type: "line",
+                data: {
+                  labels,
+                  datasets: [{
+                    label: `${text} এর রিডিং`,
+                    data,
+                    borderColor: "#e74c3c",
+                    backgroundColor: "rgba(231, 76, 60, 0.2)",
+                    fill: true,
+                    tension: 0.4
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    legend: { display: true },
+                    title: { display: true, text: `${text} এর টাইমলাইন গ্রাফ` }
+                  },
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }
+              });
+
+              addMessage(`"${text}" এর গ্রাফ তৈরি করা হয়েছে। উপরে দেখুন।`);
+            }
+          } catch (err) {
+            addMessage("গ্রাফ তৈরি করতে সমস্যা: " + err.message);
+          }
+        } else {
+          addMessage(`"${text}" নামে কোনো রোগ আপনার রেকর্ডে নেই।`);
+        }
+
+        waitingForDiseaseGraph = false;
         return;
       }
 
@@ -654,9 +729,6 @@
       addMessage("দুঃখিত, আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো\n• হাই / হ্যালো");
     };
 
-    // ========================================
-    //          চার্ট আপডেট
-    // ========================================
     function updateChart(records) {
       const ctx = document.getElementById("recordChart").getContext("2d");
       if (chartInstance) chartInstance.destroy();
@@ -699,7 +771,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: true, position: "top" },
-            title: { display: true, text: "রোগের রিডিং ট্রেন্ড", font: { size: 16 } }
+            title: { display: true, text: "সব রোগের রিডিং ট্রেন্ড", font: { size: 16 } }
           },
           scales: {
             y: { beginAtZero: true }
@@ -708,9 +780,6 @@
       });
     }
 
-    // ========================================
-    //          ইভেন্ট লিসেনার
-    // ========================================
     document.getElementById("connectBtn").onclick = connectWallet;
     document.getElementById("logoutBtn").onclick = disconnectWallet;
 
