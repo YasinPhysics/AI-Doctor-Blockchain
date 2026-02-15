@@ -209,11 +209,7 @@
 
   <div id="status">স্ট্যাটাস: সংযুক্ত নয়</div>
 
-  <!-- লাইন চার্টের জন্য (যদিও বাদ দেওয়া হয়েছে, id রাখা আছে যাতে কোনো এরর না হয়) -->
-  <canvas id="recordChart" width="600" height="300" style="display:none;"></canvas>
-
-  <!-- পাই চার্টের জন্য আলাদা canvas -->
-  <canvas id="pieChart" width="600" height="300"></canvas>
+  <canvas id="recordChart" width="600" height="300"></canvas>
 
   <script>
     const CONTRACT_ADDRESS = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
@@ -250,7 +246,7 @@
       msgDiv.innerHTML = text;
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
-      document.getElementById("userInput").focus();
+      document.getElementById("userInput").focus(); // প্রতিটা মেসেজের পর ইনপুটে ফোকাস
     }
 
     function updateStatus(text) {
@@ -345,7 +341,7 @@
         "আপনার ব্লাড গ্রুপ লিখুন (যেমন: A+, O-, B- ইত্যাদি)"
       ];
       addMessage(questions[fixedProfileStep]);
-      document.getElementById("userInput").focus();
+      document.getElementById("userInput").focus(); // প্রশ্নের পর ইনপুটে ফোকাস
     }
 
     function askUpdatableProfile() {
@@ -374,6 +370,7 @@
       document.getElementById("userInput").focus();
     }
 
+    // AI পরামর্শ ফাংশন
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
@@ -440,9 +437,9 @@
 
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল
+      // ফিক্সড প্রোফাইল - ধাপে ধাপে প্রশ্ন (ফিক্স করা)
       if (fixedProfileStep >= 0) {
-        if (["skip","নাই",""].includes(low)) {
+        if (lower === "skip" || lower === "নাই" || !text) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
           return;
         }
@@ -450,7 +447,10 @@
         switch (fixedProfileStep) {
           case 0:
             const [d, m, y] = text.split("-").map(Number);
-            if (!d || !m || !y || isNaN(d)) return addMessage("ফরম্যাট: DD-MM-YYYY");
+            if (!d || !m || !y || isNaN(d)) {
+              addMessage("ফরম্যাট ঠিক করুন: DD-MM-YYYY");
+              return;
+            }
             const dateObj = new Date(y, m-1, d);
             profileData.dateOfBirth = Math.floor(dateObj.getTime() / 1000);
             break;
@@ -459,6 +459,7 @@
         }
 
         fixedProfileStep++;
+
         if (fixedProfileStep === 3) {
           try {
             const tx = await contract.setFixedProfile(
@@ -469,15 +470,13 @@
             addMessage(`ফিক্সড প্রোফাইল সেট হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সফলভাবে সেট হয়েছে!");
-            fixedProfileStep = -1;
-            await checkProfiles();
           } catch (err) {
             addMessage("সমস্যা: " + (err.reason || err.message || "Unknown error"));
-            fixedProfileStep = -1;
-            await checkProfiles();
           }
+          fixedProfileStep = -1;
+          await checkProfiles(); // পরের ধাপে যাওয়ার জন্য চেক
         } else {
-          askFixedProfile();
+          askFixedProfile(); // পরের প্রশ্ন দেখাও
         }
         return;
       }
@@ -622,9 +621,6 @@
 
           addMessage(reply);
 
-          // চার্ট আপডেট (লাইন চার্ট বাদ, শুধু পাই চার্ট)
-          updateChart(records);
-
           // AI পরামর্শ
           if (records.length > 0) {
             await getAIAdvice(records);
@@ -731,12 +727,7 @@
       addMessage("দুঃখিত, আমি বুঝতে পারিনি। চেষ্টা করুন:\n• রেকর্ড দেখাও\n• অ্যাড করো\n• হাই / হ্যালো");
     };
 
-    // ========================================
-    //          চার্ট আপডেট (শুধু পাই চার্ট)
-    // ========================================
     function updateChart(records) {
-      // লাইন চার্ট বাদ দেওয়া হয়েছে, শুধু পাই চার্ট রাখা হলো
-
       let pieCanvas = document.getElementById("pieChart");
       if (!pieCanvas) {
         pieCanvas = document.createElement("canvas");
@@ -752,7 +743,7 @@
       }
       pieCanvas.style.display = "block";
 
-      // পুরানো পাই চার্ট ধ্বংস করা (যদি থাকে)
+      // পুরানো পাই চার্ট ধ্বংস করা
       if (window.pieChartInstance) {
         window.pieChartInstance.destroy();
       }
