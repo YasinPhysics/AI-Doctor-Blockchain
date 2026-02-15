@@ -22,7 +22,7 @@
     body {
       margin: 0;
       padding: 20px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: var(--bg-gradient);
       color: var(--text-light);
       min-height: 100vh;
@@ -246,7 +246,7 @@
       msgDiv.innerHTML = text;
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
-      document.getElementById("userInput").focus(); // প্রতিটা প্রশ্নের পর ইনপুটে ফোকাস
+      document.getElementById("userInput").focus(); // প্রতিটা প্রশ্নের পর ফোকাস
     }
 
     function updateStatus(text) {
@@ -315,7 +315,7 @@
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
 
-          // আপডেটেবল প্রোফাইল চেক (ওজন-উচ্চতা)
+          // আপডেটেবল প্রোফাইল চেক (এখানে গুরুত্বপূর্ণ)
           const profile = await contract.getPatientProfile(userAddress);
           if (profile.weightKg > 0n && profile.heightCm > 0n) {
             addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
@@ -347,11 +347,8 @@
 
       if (fixedProfileStep >= 0 && fixedProfileStep < questions.length) {
         addMessage(questions[fixedProfileStep]);
-      } else {
-        console.warn("fixedProfileStep out of range:", fixedProfileStep);
+        document.getElementById("userInput").focus();
       }
-
-      document.getElementById("userInput").focus();
     }
 
     function askUpdatableProfile() {
@@ -364,11 +361,8 @@
 
       if (updatableProfileStep >= 0 && updatableProfileStep < questions.length) {
         addMessage(questions[updatableProfileStep]);
-      } else {
-        console.warn("updatableProfileStep out of range:", updatableProfileStep);
+        document.getElementById("userInput").focus();
       }
-
-      document.getElementById("userInput").focus();
     }
 
     function askRecord() {
@@ -385,11 +379,11 @@
 
       if (recordStep >= 0 && recordStep < questions.length) {
         addMessage(questions[recordStep]);
+        document.getElementById("userInput").focus();
       }
-
-      document.getElementById("userInput").focus();
     }
 
+    // AI পরামর্শ ফাংশন
     async function getAIAdvice(records) {
       if (records.length === 0) return;
 
