@@ -274,22 +274,12 @@
       try {
         const fixed = await contract.getFixedProfile(userAddress);
         
-        // debug (পরে চাইলে সরিয়ে ফেলতে পারেন)
-        console.log("Fixed profile:", fixed);
-        console.log("dateOfBirth:", fixed.dateOfBirth?.toString());
-
         if (fixed.dateOfBirth !== 0n && fixed.dateOfBirth !== BigInt(0)) {
           addMessage("আপনার ফিক্সড প্রোফাইল ইতিমধ্যে সেট করা আছে।");
           fixedProfileStep = -1;
 
           try {
             const profile = await contract.getPatientProfile(userAddress);
-            
-            // debug
-            console.log("Updatable profile:", profile);
-            console.log("weightKg:", profile.weightKg?.toString());
-            console.log("heightCm:", profile.heightCm?.toString());
-
             if (profile.weightKg > 0n && profile.heightCm > 0n) {
               addMessage("প্রোফাইল সম্পূর্ণ সেট। এখন রেকর্ড যোগ করতে পারেন।");
               updatableProfileStep = -1;
@@ -299,16 +289,12 @@
               askUpdatableProfile();
             }
           } catch (profileErr) {
-            // "Profile not set" হলে normal (updatable profile নেই)
             if ((profileErr.reason || profileErr.message || "").includes("Profile not set")) {
-              console.warn("Updatable profile এখনো সেট করা নেই (স্বাভাবিক)");
               addMessage("আপনার ওজন, উচ্চতা, অ্যালার্জি ইত্যাদি এখনো সেট করা হয়নি। চলুন সেট করি।");
               updatableProfileStep = 0;
               askUpdatableProfile();
             } else {
-              // অন্য কোনো সমস্যা হলে
-              console.error("getPatientProfile error:", profileErr);
-              addMessage("প্রোফাইল চেক করতে অপ্রত্যাশিত সমস্যা: " + (profileErr.message || "Unknown"));
+              addMessage("প্রোফাইল চেক করতে অপ্রত্যাশিত সমস্যা: " + (profileErr.message || "Unknown error"));
               updatableProfileStep = -1;
             }
           }
@@ -320,7 +306,7 @@
       } catch (err) {
         console.error("checkProfiles error:", err);
         addMessage("প্রোফাইল চেক করতে সমস্যা: " + (err.message || "Unknown error"));
-        fixedProfileStep = -1; // লুপ বন্ধ করা খুব জরুরি
+        fixedProfileStep = -1;
       }
     }
 
@@ -422,7 +408,7 @@
       }
       const lower = text.toLowerCase();
 
-      // ফিক্সড প্রোফাইল ধাপ
+      // ফিক্সড প্রোফাইল
       if (fixedProfileStep >= 0) {
         if (["skip", "নাই", ""].includes(lower)) {
           addMessage("এই ফিল্ড স্কিপ করা যাবে না। দয়া করে সঠিক তথ্য দিন।");
@@ -456,7 +442,6 @@
             addMessage(`ফিক্সড প্রোফাইল সেট হচ্ছে... Tx: ${tx.hash.slice(0,10)}...`);
             await tx.wait();
             addMessage("ফিক্সড প্রোফাইল সফলভাবে সেট হয়েছে!");
-            // sync-এর জন্য অল্প অপেক্ষা + চেক
             await new Promise(r => setTimeout(r, 3000));
             await checkProfiles();
           } catch (err) {
@@ -469,7 +454,7 @@
         return;
       }
 
-      // আপডেটেবল প্রোফাইল ধাপ
+      // আপডেটেবল প্রোফাইল
       if (updatableProfileStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         if (skipped && updatableProfileStep < 2) {
@@ -506,7 +491,7 @@
         return;
       }
 
-      // রেকর্ড যোগ
+      // রেকর্ড অ্যাড — এখানে ফিক্স করা অংশ
       if (recordStep >= 0) {
         const skipped = ["skip", "নাই", ""].includes(lower);
         switch (recordStep) {
@@ -522,56 +507,49 @@
         recordStep++;
         if (recordStep === 8) {
           try {
-            // ──────────────────────────────────────────────────────────────
-      // এখান থেকে নতুন কোড শুরু (raw calldata)
-      const medicines = [];
-      if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
-        medicines.push([
-          recordData.medicineName.trim(),
-          recordData.dose || "",
-          recordData.frequency || "",
-          BigInt(recordData.durationDays || 0)
-        ]);
+            const medicines = [];
+            if (recordData.medicineName && recordData.medicineName.trim() !== "" && recordData.medicineName.toLowerCase() !== "skip") {
+              medicines.push([
+                recordData.medicineName.trim(),
+                recordData.dose || "",
+                recordData.frequency || "",
+                BigInt(recordData.durationDays || 0)
+              ]);
+            }
+
+            // raw calldata তৈরি (ফিক্স করা অংশ)
+            const iface = new ethers.Interface(ABI);
+            const calldata = iface.encodeFunctionData("addDailyRecord", [
+              recordData.diseaseName || "",
+              recordData.readingValue || "",
+              medicines,
+              recordData.ipfsCid || "",
+              recordData.diseaseDetails || ""
+            ]);
+
+            addMessage(`রেকর্ড অ্যাড হচ্ছে... (raw calldata)`);
+
+            const tx = await signer.sendTransaction({
+              to: CONTRACT_ADDRESS,
+              data: calldata
+            });
+
+            addMessage(`Tx পাঠানো হয়েছে: ${tx.hash.slice(0,10)}...`);
+            await tx.wait();
+            addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
+            recordStep = -1;
+          } catch (err) {
+            console.error("addDailyRecord error:", err);
+            addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || JSON.stringify(err)));
+            recordStep = -1;
+          }
+        } else {
+          askRecord();
+        }
+        return;
       }
 
-      const iface = new ethers.Interface(ABI);
-      const functionSelector = "0xcaf5bb2c";  // আসল selector (এটা কখনো পরিবর্তন করবেন না)
-
-      const encoded = iface.encodeFunctionData("addDailyRecord", [
-        recordData.diseaseName || "",
-        recordData.readingValue || "",
-        medicines,
-        recordData.ipfsCid || "",
-        recordData.diseaseDetails || ""
-      ]);
-
-      // encoded-এর প্রথম 10 অক্ষরই selector + encoded params
-      const calldata = encoded;  // ইতিমধ্যে 0x + selector + data আছে
-
-      addMessage(`রেকর্ড অ্যাড হচ্ছে... (raw call)`);
-
-      const tx = await signer.sendTransaction({
-        to: CONTRACT_ADDRESS,
-        data: calldata
-      });
-
-      addMessage(`Tx sent: ${tx.hash.slice(0,10)}...`);
-      await tx.wait();
-      addMessage("সফল! নতুন রেকর্ড যোগ হয়েছে। 'রেকর্ড দেখাও' লিখে দেখুন।");
-      recordStep = -1;
-
-    } catch (err) {
-      console.error("Raw addDailyRecord error:", err);
-      addMessage("রেকর্ড যোগ করতে সমস্যা: " + (err.reason || err.message || JSON.stringify(err)));
-      recordStep = -1;
-    }
-  } else {
-    askRecord();
-  }
-  return;
-}
-
-      // রেকর্ড দেখাও
+      // রেকর্ড দেখাও + AI + গ্রাফ
       if (lower.includes("রেকর্ড দেখাও") || lower.includes("হিস্ট্রি") || lower.includes("record") || lower.includes("history")) {
         try {
           const records = await contract.getAllDiseaseRecords(userAddress);
@@ -618,7 +596,7 @@
         return;
       }
 
-      // গ্রাফ চাওয়া
+      // গ্রাফ
       if (waitingForDiseaseGraph) {
         const requestedDisease = text.trim().toLowerCase();
         if (allDiseases.some(d => d.toLowerCase() === requestedDisease)) {
@@ -672,7 +650,7 @@
         return;
       }
 
-      // নতুন রেকর্ড যোগ
+      // নতুন রেকর্ড
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
         recordData = {};
