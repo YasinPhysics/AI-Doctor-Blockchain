@@ -213,8 +213,11 @@
 
   <div id="status">স্ট্যাটাস: সংযুক্ত নয়</div>
 
-  <!-- পাই চার্টের জন্য canvas -->
-  <canvas id="pieChart" width="600" height="400"></canvas>
+  <!-- স্পেসিফিক রোগের লাইন গ্রাফের জন্য -->
+  <canvas id="recordChart" width="600" height="300" style="display: none;"></canvas>
+
+  <!-- সব রোগের পাই চার্ট -->
+  <canvas id="pieChart" width="600" height="400" style="display: none;"></canvas>
 
   <script>
     const CONTRACT_ADDRESS = "0x1cA1699c69852Eb81D4eb68Da33ac61D064f7Be1";
@@ -233,6 +236,7 @@
     let signer = null;
     let contract = null;
     let userAddress = null;
+    let lineChartInstance = null;
     let pieChartInstance = null;
 
     let fixedProfileStep = -1;
@@ -307,6 +311,10 @@
       document.getElementById("userInput").disabled = true;
       addMessage("আপনি ডিসকানেক্ট হয়েছেন। আবার কানেক্ট করুন।");
 
+      if (lineChartInstance) {
+        lineChartInstance.destroy();
+        lineChartInstance = null;
+      }
       if (pieChartInstance) {
         pieChartInstance.destroy();
         pieChartInstance = null;
@@ -648,7 +656,7 @@
         return;
       }
 
-      // রোগের নাম দিলে স্পেসিফিক গ্রাফ বানানো
+      // রোগের নাম দিলে স্পেসিফিক লাইন গ্রাফ বানানো
       if (waitingForDiseaseGraph) {
         const requestedDisease = text.trim().toLowerCase();
 
@@ -673,12 +681,18 @@
                 });
               });
 
-              const ctx = document.getElementById("recordChart").getContext("2d");
-              if (chartInstance) chartInstance.destroy();
+              const lineCanvas = document.getElementById("recordChart");
+              if (!lineCanvas) {
+                addMessage("গ্রাফ দেখানোর জন্য canvas পাওয়া যায়নি।");
+                return;
+              }
 
-              document.getElementById("recordChart").style.display = "block";
+              const ctx = lineCanvas.getContext("2d");
+              if (lineChartInstance) lineChartInstance.destroy();
 
-              chartInstance = new Chart(ctx, {
+              lineCanvas.style.display = "block";
+
+              lineChartInstance = new Chart(ctx, {
                 type: "line",
                 data: {
                   labels,
@@ -733,25 +747,16 @@
     };
 
     // ========================================
-    //          চার্ট আপডেট (শুধু পাই চার্ট)
+    //          পাই চার্ট আপডেট (শুধু এটাই রাখা হলো)
     // ========================================
     function updateChart(records) {
-      let pieCanvas = document.getElementById("pieChart");
+      const pieCanvas = document.getElementById("pieChart");
       if (!pieCanvas) {
-        pieCanvas = document.createElement("canvas");
-        pieCanvas.id = "pieChart";
-        pieCanvas.width = 600;
-        pieCanvas.height = 300;
-        pieCanvas.style.margin = "30px auto";
-        pieCanvas.style.display = "block";
-        pieCanvas.style.maxWidth = "100%";
-        pieCanvas.style.borderRadius = "16px";
-        pieCanvas.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-        document.body.appendChild(pieCanvas);
+        console.warn("pieChart canvas পাওয়া যায়নি");
+        return;
       }
-      pieCanvas.style.display = "block";
 
-      // পুরানো পাই চার্ট ধ্বংস করা (যদি থাকে)
+      // পুরানো পাই চার্ট ধ্বংস করা
       if (window.pieChartInstance) {
         window.pieChartInstance.destroy();
       }
@@ -760,6 +765,8 @@
         pieCanvas.style.display = "none";
         return;
       }
+
+      pieCanvas.style.display = "block";
 
       const diseaseCounts = {};
       records.forEach(disease => {
@@ -789,7 +796,7 @@
           responsive: true,
           plugins: {
             legend: { position: "top" },
-            title: { display: true, text: "রোগ অনুসারে রেকর্ডের পরিমাণ (পাই চার্ট)", font: { size: 16 } }
+            title: { display: true, text: "রোগ অনুসারে রেকর্ডের পরিমাণ", font: { size: 16 } }
           }
         }
       });
