@@ -251,7 +251,7 @@
       const chatBody = document.getElementById("chat-body");
       const msgDiv = document.createElement("div");
       msgDiv.className = `message ${isUser ? "user" : "bot"}`;
-      msgDiv.innerHTML = text;  // HTML allowed for better formatting
+      msgDiv.innerHTML = text; // HTML allowed for better formatting
       chatBody.appendChild(msgDiv);
       chatBody.scrollTop = chatBody.scrollHeight;
     }
@@ -388,7 +388,7 @@
     }
 
     // ========================================
-    //          AI পরামর্শ ফাংশন (আগের মতোই)
+    //          AI পরামর্শ ফাংশন
     // ========================================
     async function getAIAdvice(records) {
       if (records.length === 0) return;
@@ -396,19 +396,32 @@
       try {
         addMessage("AI বন্ধুকে তোমার রেকর্ড দেখাচ্ছি... একটু অপেক্ষা করো।");
 
+        // BigInt → string কনভার্ট করে JSON পাঠানো যাবে
+        const serializableRecords = records.map(r => ({
+          diseaseName: r.diseaseName,
+          dailyRecords: r.dailyRecords.map(dr => ({
+            timestamp: dr.timestamp.toString(),
+            readingValue: dr.readingValue,
+            medicines: dr.medicines.map(m => ({
+              name: m.name,
+              dose: m.dose,
+              frequency: m.frequency,
+              durationDays: m.durationDays.toString()
+            })),
+            ipfsCid: dr.ipfsCid,
+            addedBy: dr.addedBy,
+            patientAgeAtRecord: dr.patientAgeAtRecord.toString(),
+            patientWeightKg: dr.patientWeightKg.toString(),
+            patientHeightCm: dr.patientHeightCm.toString(),
+            diseaseDetails: dr.diseaseDetails
+          }))
+        }));
+
         const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            records: records.map(r => ({
-              diseaseName: r.diseaseName,
-              dailyRecords: r.dailyRecords.map(dr => ({
-                readingValue: dr.readingValue,
-                timestamp: dr.timestamp.toString(),
-                medicines: dr.medicines,
-                diseaseDetails: dr.diseaseDetails
-              }))
-            })),
+            records: serializableRecords,
             userMessage: "এই রেকর্ডগুলো দেখে আমার জন্য সহজ ও সাধারণ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য না জানলে জেনারেল টিপস দিও। কোনো ওষুধ বা চিকিৎসা সাজেশন দেবে না।"
           })
         });
@@ -418,7 +431,6 @@
         }
 
         const data = await response.json();
-
         if (data.advice && data.advice.trim()) {
           addMessage("AI ডাক্তারের পরামর্শ:\n\n" + data.advice);
         } else {
@@ -619,22 +631,35 @@
           addMessage(reply);
           updateChart(records);
 
-          // AI পরামর্শ যোগ করা হলো (এখানেই)
+          // AI পরামর্শ আনা
           if (records.length > 0) {
             try {
+              // BigInt → string কনভার্ট
+              const serializableRecords = records.map(r => ({
+                diseaseName: r.diseaseName,
+                dailyRecords: r.dailyRecords.map(dr => ({
+                  timestamp: dr.timestamp.toString(),
+                  readingValue: dr.readingValue,
+                  medicines: dr.medicines.map(m => ({
+                    name: m.name,
+                    dose: m.dose,
+                    frequency: m.frequency,
+                    durationDays: m.durationDays.toString()
+                  })),
+                  ipfsCid: dr.ipfsCid,
+                  addedBy: dr.addedBy,
+                  patientAgeAtRecord: dr.patientAgeAtRecord.toString(),
+                  patientWeightKg: dr.patientWeightKg.toString(),
+                  patientHeightCm: dr.patientHeightCm.toString(),
+                  diseaseDetails: dr.diseaseDetails
+                }))
+              }));
+
               const response = await fetch('https://github.com/YasinPhysics/AI-Doctor-Blockchain/tree/2913c54bdebd0872d4bde0f48a58cac293810f7b/api', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  records: records.map(r => ({
-                    diseaseName: r.diseaseName,
-                    dailyRecords: r.dailyRecords.map(dr => ({
-                      readingValue: dr.readingValue,
-                      timestamp: dr.timestamp.toString(),
-                      medicines: dr.medicines,
-                      diseaseDetails: dr.diseaseDetails
-                    }))
-                  })),
+                  records: serializableRecords,
                   userMessage: "এই রেকর্ডগুলো দেখে আমার জন্য সহজ ও সাধারণ পরামর্শ দাও। আমার বয়স/লিঙ্গ/অন্যান্য তথ্য না জানলে জেনারেল টিপস দিও। কোনো ওষুধ বা চিকিৎসা সাজেশন দেবে না।"
                 })
               });
@@ -661,7 +686,6 @@
         return;
       }
 
-      // অ্যাড করো কমান্ড
       if (lower.includes("অ্যাড") || lower.includes("add") || lower.includes("যোগ") || lower.includes("নতুন")) {
         recordStep = 0;
         recordData = {};
@@ -670,7 +694,6 @@
         return;
       }
 
-      // হাই / হ্যালো
       if (["হাই", "হ্যালো", "কেমন আছো", "হেলো"].some(w => lower.includes(w))) {
         addMessage("হ্যালো! 😊 আমি ভালো আছি। আপনার স্বাস্থ্য নিয়ে কী করতে চান?");
         return;
