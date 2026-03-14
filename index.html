@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Doctor – তোমার স্বাস্থ্য সঙ্গী</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+   :root {
+      --primary: #009688;
+      --primary-dark: #00796b;
+      --accent: #ff5722;
+      --bg-gradient: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+      --card-bg: white;
+      --text-dark: #004d40;
+      --text-light: #333;
+      --gray: #64748b;
+      --light-gray: #f1f5f9;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-light);
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary-dark);
+      margin: 0 0 20px;
+      font-size: 2.2rem;
+    }
+    #chat-container {
+      max-width: 760px;
+      margin: 0 auto 30px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    /* ... তোমার আগের সব চ্যাট স্টাইল এখানে থাকবে ... (অপরিবর্তিত) ... */
+
+    /* নতুন সেকশনগুলোর জন্য স্টাইল */
+    .section {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    .section h2 {
+      font-size: 2.2rem;
+      color: var(--primary-dark);
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    .section h2::after {
+      content: '';
+      width: 80px;
+      height: 4px;
+      background: var(--primary);
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    .graphs-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+    }
+    .graph-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      padding: 24px;
+      flex: 1;
+      min-width: 320px;
+      max-width: 500px;
+    }
+    .graph-card h3 {
+      font-size: 1.4rem;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .explanation {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      padding: 40px 32px;
+    }
+    .explanation ul {
+      list-style: none;
+      margin-top: 2rem;
+    }
+    .explanation li {
+      margin-bottom: 1.8rem;
+      font-size: 1.08rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .explanation li i {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .graphs-container {
+        flex-direction: column;
+      }
+      .section h2 {
+        font-size: 1.9rem;
+      }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navbar */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .nav-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 80px;
+    }
+
+    .logo {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      margin-left: 2.5rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 120px;
+      background: linear-gradient(to bottom, rgba(15,23,42,0.9), rgba(15,23,42,1));
+    }
+
+    .hero-content {
+      max-width: 720px;
+    }
+
+    .hero h1 {
+      font-size: clamp(3.2rem, 8vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.35rem;
+      color: #cbd5e1;
+      margin-bottom: 2.5rem;
+      max-width: 600px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 32px;
+      font-size: 1.15rem;
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 25px rgba(16,185,129,0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 20px 35px rgba(16,185,129,0.35);
+    }
+
+    /* Features */
+    .features {
+      padding: 8rem 0;
+      background: rgba(30,41,59,0.6);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem;
+    }
+
+    .feature-card {
+      background: rgba(30,41,59,0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 2.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-12px);
+      border-color: var(--primary);
+      box-shadow: 0 20px 40px rgba(16,185,129,0.15);
+    }
+
+    .feature-icon {
+      font-size: 2.8rem;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Footer */
+    footer {
+      padding: 5rem 0 3rem;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      color: #94a3b8;
+    }
+
+    /* Grok-style sticky button */
+    .grok-sticky {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border-radius: 50%;
+      box-shadow: 0 12px 32px rgba(16,185,129,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2.2rem;
+      cursor: pointer;
+      z-index: 9999;
+      transition: all 0.3s ease;
+      border: 3px solid rgba(255,255,255,0.25);
+    }
+
+    .grok-sticky:hover {
+      transform: scale(1.15) translateY(-6px);
+      box-shadow: 0 20px 50px rgba(16,185,129,0.6);
+    }
+
+    .grok-sticky i {
+      transition: transform 0.4s ease;
+    }
+
+    .grok-sticky:hover i {
+      transform: rotate(360deg);
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: clamp(2.8rem, 12vw, 4.2rem); }
+      .hero p { font-size: 1.15rem; }
+      .grok-sticky {
+        bottom: 24px;
+        right: 24px;
+        width: 64px;
+        height: 64px;
+        font-size: 1.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="container nav-inner">
+      <a href="#" class="logo">AI Doctor</a>
+      <div class="nav-links">
+        <a href="#features">কেন আমরা?</a>
+        <a href="#how">কীভাবে কাজ করে?</a>
+        <a href="#contact">যোগাযোগ</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>তোমার স্বাস্থ্যের AI ডাক্তার</h1>
+        <p>
+          তোমার সব স্বাস্থ্য তথ্য ব্লকচেইনে নিরাপদে সংরক্ষণ করো।<br>
+          যেকোনো সময় যেকোনো ডাক্তারের সাথে শেয়ার করো — পুরোপুরি নিয়ন্ত্রণ তোমার হাতে।
+        </p>
+        <a href="chatbot.html" class="btn-primary">
+          <i class="fas fa-robot"></i> এখনই চ্যাট শুরু করি
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-lock"></i></div>
+          <h3>১০০% প্রাইভেসি</h3>
+          <p>তোমার ডেটা কখনো আমাদের সার্ভারে সেভ হয় না। সবকিছু তোমার ওয়ালেটে এনক্রিপ্টেড থাকে।</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-share-alt"></i></div>
+          <h3>ডাক্তারের সাথে শেয়ার</h3>
+          <p>শুধুমাত্র তুমি যাকে অনুমতি দিবে, শুধু সেই ডাক্তার তোমার রেকর্ড দেখতে পারবে।</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-brain"></i></div>
+          <h3>AI সহায়তা</h3>
+          <p>সাধারণ পরামর্শ, ট্রেন্ড অ্যানালাইসিস, ওষুধের রিমাইন্ডার — সবকিছু তোমার পকেটে।</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- নতুন সেকশন ১: গ্রাফ সেকশন -->
+  <section class="section">
+    <h2>তোমার স্বাস্থ্যের গ্রাফিকাল বিশ্লেষণ</h2>
+    <div class="graphs-container">
+      <!-- লাইন চার্ট -->
+      <div class="graph-card">
+        <h3>diabetes এর টাইমলাইন গ্রাফ</h3>
+        <canvas id="recordChart" width="500" height="300"></canvas>
+      </div>
+
+      <!-- পাই চার্ট -->
+      <div class="graph-card">
+        <h3>রোগ অনুসারে রেকর্ডের পরিমাণ</h3>
+        <canvas id="pieChart" width="500" height="300"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- নতুন সেকশন ২: AI কীভাবে কাজ করে -->
+  <section class="section">
+    <h2>AI কীভাবে তোমাকে পরামর্শ দেয়?</h2>
+    <div class="explanation">
+      <p style="font-size: 1.15rem; text-align: center; color: var(--gray); margin-bottom: 2.5rem;">
+        আমরা শুধু কথা বলি না — গণিত, স্ট্যাটিস্টিক্স ও ডাটা সায়েন্স ব্যবহার করে তোমার ডেটা বিশ্লেষণ করি।
+      </p>
+
+      <ul>
+        <li>
+          <i class="fas fa-brain"></i>
+          <div>
+            <strong>গণিত ও স্ট্যাটিস্টিক্স</strong><br>
+            তোমার রিডিং-এর ট্রেন্ড, গড়, স্ট্যান্ডার্ড ডেভিয়েশন, পার্সেন্টাইল বিশ্লেষণ করে বুঝি কোন দিকে যাচ্ছে তোমার স্বাস্থ্য।
+          </div>
+        </li>
+        <li>
+          <i class="fas fa-chart-line"></i>
+          <div>
+            <strong>টাইম-সিরিজ অ্যানালাইসিস</strong><br>
+            গ্রাফে দেখানো হয় কোন সময়ে রিডিং বাড়ছে/কমছে। এতে ডাক্তারের সাথে আলোচনা করা সহজ হয়।
+          </div>
+        </li>
+        <li>
+          <i class="fas fa-database"></i>
+          <div>
+            <strong>ব্লকচেইন সংরক্ষণ</strong><br>
+            তোমার প্রতিটি রেকর্ড Arc Testnet-এর ব্লকচেইনে সংরক্ষিত থাকে। কেউ পরিবর্তন করতে পারে না, শুধু তুমি অনুমতি দিলে ডাক্তার দেখতে পারে।
+          </div>
+        </li>
+        <li>
+          <i class="fas fa-shield-alt"></i>
+          <div>
+            <strong>পুরোপুরি তোমার নিয়ন্ত্রণে</strong><br>
+            ডেটা কখনো আমাদের সার্ভারে সেভ হয় না। সবকিছু তোমার ওয়ালেটে এনক্রিপ্টেড।
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+
+  
+
+  <!-- Sticky Grok-style Button -->
+  <a href="chatbot.html" class="grok-sticky" title="AI Doctor এর সাথে কথা বলুন">
+    <i class="fas fa-robot"></i>
+  </a>
+
+
+<script>
+
+  
+    const lineCtx = document.getElementById('recordChart').getContext('2d');
+    new Chart(lineCtx, {
+      type: 'line',
+      data: {
+        labels: ['১/১/২০২৫', '১৫/১/২০২৫', '১/২/২০২৫', '১৫/২/২০২৫', '১/৩/২০২৫'],
+        datasets: [{
+          label: 'diabetes এর রিডিং',
+          data: [180, 160, 120, 90, 140],
+          borderColor: '#e74c3c',
+          backgroundColor: 'rgba(231, 76, 60, 0.2)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: ['ডায়াবেটিস', 'উচ্চ রক্তচাপ', 'থাইরয়েড', 'অন্যান্য'],
+        datasets: [{
+          data: [45, 25, 15, 15],
+          backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+        }]
+      },
+      options: { responsive: true }
+    });
+  </script>
+
+  
+</body>
+</html>
