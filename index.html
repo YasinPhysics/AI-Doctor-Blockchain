@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Doctor – তোমার স্বাস্থ্য সঙ্গী</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --primary: #10b981;
@@ -13,13 +14,11 @@
       --gray: #64748b;
       --light: #f8fafc;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -27,14 +26,12 @@
       line-height: 1.6;
       min-height: 100vh;
     }
-
     .container {
       width: 100%;
       max-width: 1280px;
       margin: 0 auto;
       padding: 0 24px;
     }
-
     /* Navbar */
     nav {
       position: fixed;
@@ -45,21 +42,18 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-
     .nav-inner {
       display: flex;
       justify-content: space-between;
       align-items: center;
       height: 80px;
     }
-
     .logo {
       font-size: 1.75rem;
       font-weight: 800;
       color: var(--primary);
       text-decoration: none;
     }
-
     .nav-links a {
       color: #cbd5e1;
       text-decoration: none;
@@ -67,11 +61,9 @@
       font-weight: 500;
       transition: color 0.2s;
     }
-
     .nav-links a:hover {
       color: var(--primary);
     }
-
     /* Hero */
     .hero {
       min-height: 100vh;
@@ -80,11 +72,9 @@
       padding-top: 120px;
       background: linear-gradient(to bottom, rgba(15,23,42,0.9), rgba(15,23,42,1));
     }
-
     .hero-content {
       max-width: 720px;
     }
-
     .hero h1 {
       font-size: clamp(3.2rem, 8vw, 5.5rem);
       font-weight: 800;
@@ -94,14 +84,12 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-
     .hero p {
       font-size: 1.35rem;
       color: #cbd5e1;
       margin-bottom: 2.5rem;
       max-width: 600px;
     }
-
     .btn-primary {
       display: inline-flex;
       align-items: center;
@@ -117,25 +105,21 @@
       transition: all 0.3s ease;
       box-shadow: 0 10px 25px rgba(16,185,129,0.25);
     }
-
     .btn-primary:hover {
       background: var(--primary-dark);
       transform: translateY(-3px);
       box-shadow: 0 20px 35px rgba(16,185,129,0.35);
     }
-
     /* Features */
     .features {
       padding: 8rem 0;
       background: rgba(30,41,59,0.6);
     }
-
     .features-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 2.5rem;
     }
-
     .feature-card {
       background: rgba(30,41,59,0.7);
       backdrop-filter: blur(10px);
@@ -144,24 +128,20 @@
       padding: 2.5rem;
       transition: all 0.3s ease;
     }
-
     .feature-card:hover {
       transform: translateY(-12px);
       border-color: var(--primary);
       box-shadow: 0 20px 40px rgba(16,185,129,0.15);
     }
-
     .feature-icon {
       font-size: 2.8rem;
       color: var(--primary);
       margin-bottom: 1.5rem;
     }
-
     .feature-card h3 {
       font-size: 1.6rem;
       margin-bottom: 1rem;
     }
-
     /* Footer */
     footer {
       padding: 5rem 0 3rem;
@@ -169,7 +149,6 @@
       border-top: 1px solid rgba(255,255,255,0.08);
       color: #94a3b8;
     }
-
     /* Grok-style sticky button */
     .grok-sticky {
       position: fixed;
@@ -190,20 +169,16 @@
       transition: all 0.3s ease;
       border: 3px solid rgba(255,255,255,0.25);
     }
-
     .grok-sticky:hover {
       transform: scale(1.15) translateY(-6px);
       box-shadow: 0 20px 50px rgba(16,185,129,0.6);
     }
-
     .grok-sticky i {
       transition: transform 0.4s ease;
     }
-
     .grok-sticky:hover i {
       transform: rotate(360deg);
     }
-
     @media (max-width: 768px) {
       .hero h1 { font-size: clamp(2.8rem, 12vw, 4.2rem); }
       .hero p { font-size: 1.15rem; }
@@ -212,6 +187,88 @@
         right: 24px;
         width: 64px;
         height: 64px;
+        font-size: 1.9rem;
+      }
+    }
+
+    /* নতুন সেকশন স্টাইল */
+    .section {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    .section h2 {
+      font-size: 2.2rem;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    .section h2::after {
+      content: '';
+      width: 80px;
+      height: 4px;
+      background: var(--primary);
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+    .graphs-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+    }
+    .graph-card {
+      background: rgba(30,41,59,0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      flex: 1;
+      min-width: 340px;
+      max-width: 500px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+    .graph-card h3 {
+      font-size: 1.4rem;
+      color: #e2e8f0;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .explanation {
+      background: rgba(30,41,59,0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 40px 32px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+    .explanation ul {
+      list-style: none;
+      margin-top: 2rem;
+    }
+    .explanation li {
+      margin-bottom: 1.8rem;
+      font-size: 1.08rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      color: #cbd5e1;
+    }
+    .explanation li i {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .graphs-container {
+        flex-direction: column;
+      }
+      .section h2 {
         font-size: 1.9rem;
       }
     }
@@ -256,13 +313,11 @@
           <h3>১০০% প্রাইভেসি</h3>
           <p>তোমার ডেটা কখনো আমাদের সার্ভারে সেভ হয় না। সবকিছু তোমার ওয়ালেটে এনক্রিপ্টেড থাকে।</p>
         </div>
-
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-share-alt"></i></div>
           <h3>ডাক্তারের সাথে শেয়ার</h3>
           <p>শুধুমাত্র তুমি যাকে অনুমতি দিবে, শুধু সেই ডাক্তার তোমার রেকর্ড দেখতে পারবে।</p>
         </div>
-
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-brain"></i></div>
           <h3>AI সহায়তা</h3>
@@ -272,10 +327,109 @@
     </div>
   </section>
 
+  <!-- নতুন সেকশন ১: গ্রাফ সেকশন -->
+  <section class="section">
+    <h2>তোমার স্বাস্থ্যের গ্রাফিকাল বিশ্লেষণ</h2>
+    <div class="graphs-container">
+      <div class="graph-card">
+        <h3>diabetes এর টাইমলাইন গ্রাফ</h3>
+        <canvas id="recordChart"></canvas>
+      </div>
+      <div class="graph-card">
+        <h3>রোগ অনুসারে রেকর্ডের পরিমাণ</h3>
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- নতুন সেকশন ২: AI কীভাবে কাজ করে -->
+  <section class="section">
+    <h2>AI কীভাবে তোমাকে পরামর্শ দেয়?</h2>
+    <div class="explanation">
+      <p style="font-size: 1.15rem; text-align: center; color: var(--gray); margin-bottom: 2.5rem;">
+        আমরা শুধু কথা বলি না — গণিত, স্ট্যাটিস্টিক্স ও ডাটা সায়েন্স ব্যবহার করে তোমার ডেটা বিশ্লেষণ করি।
+      </p>
+      <ul>
+        <li>
+          <i class="fas fa-brain"></i>
+          <div>
+            <strong>গণিত ও স্ট্যাটিস্টিক্স</strong><br>
+            তোমার রিডিং-এর ট্রেন্ড, গড়, স্ট্যান্ডার্ড ডেভিয়েশন, পার্সেন্টাইল বিশ্লেষণ করে বুঝি কোন দিকে যাচ্ছে তোমার স্বাস্থ্য।
+          </div>
+        </li>
+        <li>
+          <i class="fas fa-chart-line"></i>
+          <div>
+            <strong>টাইম-সিরিজ অ্যানালাইসিস</strong><br>
+            গ্রাফে দেখানো হয় কোন সময়ে রিডিং বাড়ছে/কমছে। এতে ডাক্তারের সাথে আলোচনা করা সহজ হয়।
+          </div>
+        </li>
+        <li>
+          <i class="fas fa-database"></i>
+          <div>
+            <strong>ব্লকচেইন সংরক্ষণ</strong><br>
+            তোমার প্রতিটি রেকর্ড Arc Testnet-এর ব্লকচেইনে সংরক্ষিত থাকে। কেউ পরিবর্তন করতে পারে না, শুধু তুমি অনুমতি দিলে ডাক্তার দেখতে পারে।
+          </div>
+        </li>
+        <li>
+          <i class="fas fa-shield-alt"></i>
+          <div>
+            <strong>পুরোপুরি তোমার নিয়ন্ত্রণে</strong><br>
+            ডেটা কখনো আমাদের সার্ভারে সেভ হয় না। সবকিছু তোমার ওয়ালেটে এনক্রিপ্টেড।
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
   <!-- Sticky Grok-style Button -->
   <a href="chatbot.html" class="grok-sticky" title="AI Doctor এর সাথে কথা বলুন">
     <i class="fas fa-robot"></i>
   </a>
+
+  <script>
+    // গ্রাফ ইনিশিয়ালাইজ করা
+    document.addEventListener("DOMContentLoaded", function () {
+      // লাইন চার্ট
+      const lineCtx = document.getElementById('recordChart');
+      if (lineCtx) {
+        new Chart(lineCtx.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: ['১/১/২০২৫', '১৫/১/২০২৫', '১/২/২০২৫', '১৫/২/২০২৫', '১/৩/২০২৫'],
+            datasets: [{
+              label: 'diabetes এর রিডিং',
+              data: [180, 160, 120, 90, 140],
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.2)',
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
+
+      // পাই চার্ট
+      const pieCtx = document.getElementById('pieChart');
+      if (pieCtx) {
+        new Chart(pieCtx.getContext('2d'), {
+          type: 'pie',
+          data: {
+            labels: ['ডায়াবেটিস', 'উচ্চ রক্তচাপ', 'থাইরয়েড', 'অন্যান্য'],
+            datasets: [{
+              data: [45, 25, 15, 15],
+              backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+            }]
+          },
+          options: { responsive: true }
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>
