@@ -4,9 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Doctor – তোমার স্বাস্থ্য সঙ্গী</title>
+  
+  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  
   <style>
-   :root {
+    :root {
       --primary: #009688;
       --primary-dark: #00796b;
       --accent: #ff5722;
@@ -17,107 +20,19 @@
       --gray: #64748b;
       --light-gray: #f1f5f9;
     }
-    body {
+
+    * {
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg-gradient);
       color: var(--text-light);
       min-height: 100vh;
-    }
-    h1 {
-      text-align: center;
-      color: var(--primary-dark);
-      margin: 0 0 20px;
-      font-size: 2.2rem;
-    }
-    #chat-container {
-      max-width: 760px;
-      margin: 0 auto 30px;
-      background: var(--card-bg);
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-      overflow: hidden;
-    }
-    /* ... তোমার আগের সব চ্যাট স্টাইল এখানে থাকবে ... (অপরিবর্তিত) ... */
-
-    /* নতুন সেকশনগুলোর জন্য স্টাইল */
-    .section {
-      max-width: 900px;
-      margin: 60px auto;
-      padding: 0 20px;
-    }
-    .section h2 {
-      font-size: 2.2rem;
-      color: var(--primary-dark);
-      text-align: center;
-      margin-bottom: 2rem;
-      position: relative;
-    }
-    .section h2::after {
-      content: '';
-      width: 80px;
-      height: 4px;
-      background: var(--primary);
-      position: absolute;
-      bottom: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 2px;
-    }
-
-    .graphs-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 40px;
-      justify-content: center;
-    }
-    .graph-card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      padding: 24px;
-      flex: 1;
-      min-width: 320px;
-      max-width: 500px;
-    }
-    .graph-card h3 {
-      font-size: 1.4rem;
-      color: var(--primary-dark);
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .explanation {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      padding: 40px 32px;
-    }
-    .explanation ul {
-      list-style: none;
-      margin-top: 2rem;
-    }
-    .explanation li {
-      margin-bottom: 1.8rem;
-      font-size: 1.08rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .explanation li i {
-      font-size: 2rem;
-      color: var(--primary);
-      margin-top: 4px;
-    }
-
-    @media (max-width: 768px) {
-      .graphs-container {
-        flex-direction: column;
-      }
-      .section h2 {
-        font-size: 1.9rem;
-      }
+      line-height: 1.6;
     }
 
     .container {
@@ -164,7 +79,7 @@
       color: var(--primary);
     }
 
-    /* Hero */
+    /* Hero Section */
     .hero {
       min-height: 100vh;
       display: flex;
@@ -216,7 +131,7 @@
       box-shadow: 0 20px 35px rgba(16,185,129,0.35);
     }
 
-    /* Features */
+    /* Features Section */
     .features {
       padding: 8rem 0;
       background: rgba(30,41,59,0.6);
@@ -254,15 +169,204 @@
       margin-bottom: 1rem;
     }
 
-    /* Footer */
-    footer {
-      padding: 5rem 0 3rem;
-      text-align: center;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      color: #94a3b8;
+    /* Chatbot Section */
+    #chat-container {
+      max-width: 760px;
+      margin: 60px auto 30px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
     }
 
-    /* Grok-style sticky button */
+    #chat-header {
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 18px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.35rem;
+    }
+
+    #chat-body {
+      height: 460px;
+      overflow-y: auto;
+      padding: 24px;
+      background: #f8f9fa;
+    }
+
+    .message {
+      margin: 16px 0;
+      padding: 14px 20px;
+      border-radius: 22px;
+      max-width: 84%;
+      line-height: 1.55;
+      word-wrap: break-word;
+      font-size: 1.02rem;
+    }
+
+    .user {
+      background: var(--primary);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 6px;
+    }
+
+    .bot {
+      background: #e0f2f1;
+      color: var(--text-dark);
+      margin-right: auto;
+      border-bottom-left-radius: 6px;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 16px 20px;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 14px 20px;
+      border: 1px solid #ccc;
+      border-radius: 50px;
+      outline: none;
+      font-size: 1.05rem;
+      transition: border-color 0.2s;
+    }
+
+    #userInput:focus {
+      border-color: var(--primary);
+    }
+
+    #sendBtn {
+      margin-left: 12px;
+      padding: 0 28px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    #sendBtn:hover {
+      background: var(--primary-dark);
+    }
+
+    .auth-buttons {
+      text-align: center;
+      margin: 24px 0;
+    }
+
+    #connectBtn, #logoutBtn {
+      padding: 14px 40px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 10px;
+    }
+
+    #connectBtn {
+      background: var(--accent);
+      color: white;
+    }
+
+    #logoutBtn {
+      background: #e74c3c;
+      color: white;
+      display: none;
+    }
+
+    #status {
+      text-align: center;
+      margin: 16px 0;
+      color: #555;
+      font-weight: 500;
+    }
+
+    /* New Sections */
+    .section {
+      max-width: 1000px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    .section h2 {
+      font-size: 2.4rem;
+      margin-bottom: 2.5rem;
+      position: relative;
+      text-align: center;
+    }
+
+    .section h2::after {
+      content: '';
+      width: 100px;
+      height: 4px;
+      background: var(--primary);
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    .graphs-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+    }
+
+    .graph-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      padding: 24px;
+      flex: 1;
+      min-width: 340px;
+      max-width: 520px;
+    }
+
+    .graph-card h3 {
+      text-align: center;
+      color: var(--primary-dark);
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+
+    .explanation {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      padding: 40px 32px;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .explanation ul {
+      list-style: none;
+      margin-top: 2rem;
+    }
+
+    .explanation li {
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .explanation li i {
+      font-size: 2.5rem;
+      color: var(--primary);
+      min-width: 50px;
+    }
+
+    /* Sticky Grok-style Button */
     .grok-sticky {
       position: fixed;
       bottom: 32px;
@@ -306,6 +410,12 @@
         height: 64px;
         font-size: 1.9rem;
       }
+      .graphs-container {
+        flex-direction: column;
+      }
+      .section h2 {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
@@ -332,12 +442,35 @@
           তোমার সব স্বাস্থ্য তথ্য ব্লকচেইনে নিরাপদে সংরক্ষণ করো।<br>
           যেকোনো সময় যেকোনো ডাক্তারের সাথে শেয়ার করো — পুরোপুরি নিয়ন্ত্রণ তোমার হাতে।
         </p>
-        <a href="chatbot.html" class="btn-primary">
+        <a href="#chat-container" class="btn-primary">
           <i class="fas fa-robot"></i> এখনই চ্যাট শুরু করি
         </a>
       </div>
     </div>
   </section>
+
+  <!-- Chatbot UI -->
+  <div id="chat-container">
+    <div id="chat-header">Arc Testnet - LifeHealth Chain</div>
+    <div id="chat-body">
+      <div class="message bot">
+        হ্যালো! 👋 আমি তোমার AI ডাক্তার বন্ধু।<br><br>
+        আমি তোমার স্বাস্থ্য রেকর্ড নিরাপদে রাখতে সাহায্য করব।<br>
+        প্রথমে ওয়ালেট কানেক্ট করো, তারপর আমরা শুরু করব।
+      </div>
+    </div>
+    <div id="input-area">
+      <input type="text" id="userInput" placeholder="আমাকে বলো কী করতে চাও..." autocomplete="off" />
+      <button id="sendBtn">পাঠান</button>
+    </div>
+  </div>
+
+  <div class="auth-buttons">
+    <button id="connectBtn">ওয়ালেট কানেক্ট করুন (Arc Testnet)</button>
+    <button id="logoutBtn">লগআউট</button>
+  </div>
+
+  <div id="status">স্ট্যাটাস: সংযুক্ত নয়</div>
 
   <!-- Features -->
   <section class="features" id="features">
@@ -364,30 +497,26 @@
     </div>
   </section>
 
-
-  <!-- নতুন সেকশন ১: গ্রাফ সেকশন -->
+  <!-- Graphs Section -->
   <section class="section">
     <h2>তোমার স্বাস্থ্যের গ্রাফিকাল বিশ্লেষণ</h2>
     <div class="graphs-container">
-      <!-- লাইন চার্ট -->
       <div class="graph-card">
         <h3>diabetes এর টাইমলাইন গ্রাফ</h3>
-        <canvas id="recordChart" width="500" height="300"></canvas>
+        <canvas id="recordChart"></canvas>
       </div>
-
-      <!-- পাই চার্ট -->
       <div class="graph-card">
         <h3>রোগ অনুসারে রেকর্ডের পরিমাণ</h3>
-        <canvas id="pieChart" width="500" height="300"></canvas>
+        <canvas id="pieChart"></canvas>
       </div>
     </div>
   </section>
 
-  <!-- নতুন সেকশন ২: AI কীভাবে কাজ করে -->
+  <!-- Explanation Section -->
   <section class="section">
     <h2>AI কীভাবে তোমাকে পরামর্শ দেয়?</h2>
     <div class="explanation">
-      <p style="font-size: 1.15rem; text-align: center; color: var(--gray); margin-bottom: 2.5rem;">
+      <p style="text-align: center; margin-bottom: 2.5rem; color: var(--gray);">
         আমরা শুধু কথা বলি না — গণিত, স্ট্যাটিস্টিক্স ও ডাটা সায়েন্স ব্যবহার করে তোমার ডেটা বিশ্লেষণ করি।
       </p>
 
@@ -424,52 +553,54 @@
     </div>
   </section>
 
-
-  
-
-  <!-- Sticky Grok-style Button -->
-  <a href="chatbot.html" class="grok-sticky" title="AI Doctor এর সাথে কথা বলুন">
+  <!-- Sticky Grok Button -->
+  <a href="#chat-container" class="grok-sticky" title="AI Doctor এর সাথে কথা বলুন">
     <i class="fas fa-robot"></i>
   </a>
 
+  <!-- Scripts -->
+  <script>
+    // Chart.js Initialization
+    document.addEventListener("DOMContentLoaded", function () {
+      // Line Chart
+      const lineCtx = document.getElementById('recordChart');
+      if (lineCtx) {
+        new Chart(lineCtx.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: ['১/১/২০২৫', '১৫/১/২০২৫', '১/২/২০২৫', '১৫/২/২০২৫', '১/৩/২০২৫'],
+            datasets: [{
+              label: 'diabetes এর রিডিং',
+              data: [180, 160, 120, 90, 140],
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.2)',
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      }
 
-<script>
-
-  
-    const lineCtx = document.getElementById('recordChart').getContext('2d');
-    new Chart(lineCtx, {
-      type: 'line',
-      data: {
-        labels: ['১/১/২০২৫', '১৫/১/২০২৫', '১/২/২০২৫', '১৫/২/২০২৫', '১/৩/২০২৫'],
-        datasets: [{
-          label: 'diabetes এর রিডিং',
-          data: [180, 160, 120, 90, 140],
-          borderColor: '#e74c3c',
-          backgroundColor: 'rgba(231, 76, 60, 0.2)',
-          fill: true,
-          tension: 0.4
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
+      // Pie Chart
+      const pieCtx = document.getElementById('pieChart');
+      if (pieCtx) {
+        new Chart(pieCtx.getContext('2d'), {
+          type: 'pie',
+          data: {
+            labels: ['ডায়াবেটিস', 'উচ্চ রক্তচাপ', 'থাইরয়েড', 'অন্যান্য'],
+            datasets: [{
+              data: [45, 25, 15, 15],
+              backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+            }]
+          },
+          options: { responsive: true }
+        });
       }
     });
-
-    const pieCtx = document.getElementById('pieChart').getContext('2d');
-    new Chart(pieCtx, {
-      type: 'pie',
-      data: {
-        labels: ['ডায়াবেটিস', 'উচ্চ রক্তচাপ', 'থাইরয়েড', 'অন্যান্য'],
-        datasets: [{
-          data: [45, 25, 15, 15],
-          backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
-        }]
-      },
-      options: { responsive: true }
-    });
   </script>
-
-  
 </body>
 </html>
